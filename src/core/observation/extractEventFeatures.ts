@@ -1,13 +1,27 @@
 // Feature extraction from observation events
 // For MVP: rule-based extraction from mock/sample data
 // Future: replace with real image processing
+//
+// 写像 M2: Event (Raw) → Measured
+// このファイルは Raw 層（カメラフレーム・検出イベントの生データ）から
+// Measured 層（EventFeatures）を作る責務を担う。
+// Raw と Measured は別の層であり、混同しないこと。
 
 import type { EventFeatures } from '../../types/observation'
 
 /** Clamp a value between 0 and 1 */
 const clamp = (v: number): number => Math.max(0, Math.min(1, v))
 
-/** Extract features from a raw feature object (mock or real) */
+/**
+ * M2: Event (Raw) → Measured
+ *
+ * 生のイベントデータ（フレーム画像・ピクセル値など）から
+ * 正規化された測定値 (EventFeatures) を生成する。
+ *
+ * @param raw - Raw 層の入力値（部分的でもよい）。実装上は Partial<EventFeatures> だが、
+ *              将来は画像バッファやフレームオブジェクトになる。
+ * @returns EventFeatures - Measured 層の値。すべて 0–1 に正規化されている。
+ */
 export function extractEventFeatures(raw: Partial<EventFeatures>): EventFeatures {
   return {
     brightness: clamp(raw.brightness ?? 0.5),
@@ -22,7 +36,10 @@ export function extractEventFeatures(raw: Partial<EventFeatures>): EventFeatures
   }
 }
 
-/** Generate a random feature set for testing */
+/**
+ * M2 (テスト用): ランダムな EventFeatures を生成する。
+ * 本番では Raw フレームから extractEventFeatures を呼び出すこと。
+ */
 export function randomEventFeatures(seed?: number): EventFeatures {
   let s = seed ?? Math.random() * 1000
   const r = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff }

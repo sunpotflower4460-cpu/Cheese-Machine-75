@@ -1,6 +1,17 @@
 // Observation Pipeline for Cheese Machine 75
 // Parallel to runNodePipeline but for observation input
 // Philosophy: field judgment → reaction → stance → home return → guide → revision → memory
+//
+// 写像 M4: Measured (EventFeatures) + ObservationContext → Nodes
+// このファイルは Measured 層の値をもとに観測ノードを発火させ、
+// バインディング・パターンを立てる（Inferred への中間段階）。
+//
+// 変換フロー:
+//   EventFeatures
+//     → activateObservationNodes()  [Measured → signal/artifact/hypothesis Nodes]
+//     → bindObsNodes()              [Nodes → Bindings]
+//     → liftObsPatterns()           [Nodes + Bindings → Patterns]
+//     → analyzeObsField()           [Nodes + Features → ObservationStateVector]
 
 import { OBS_BINDING_RULES, OBS_CORE_NODES, OBS_PATTERN_RULES } from './observationNodeData'
 import type {
@@ -16,7 +27,12 @@ import type {
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
-/** Activate observation nodes based on extracted event features */
+/**
+ * M4 – Step 1: Measured → Nodes
+ * EventFeatures (Measured 層) の各値をしきい値判定し、
+ * 該当する観測ノードを発火させる。
+ * どの測定値がどのノード発火につながるかは、各 activate() 呼び出しのコメントで追える。
+ */
 function retrieveObsNodes(features: EventFeatures): {
   activatedNodes: ObservationNode[]
   suppressedNodes: SuppressedObservationNode[]
@@ -123,6 +139,7 @@ function retrieveObsNodes(features: EventFeatures): {
   return { activatedNodes: nodes, suppressedNodes: suppressed, debugNotes: debug }
 }
 
+/** M4 – Step 2: Nodes → Bindings。共起ノードの関係を記述する。 */
 function bindObsNodes(nodes: ObservationNode[]): { bindings: ObservationBinding[]; debugNotes: string[] } {
   const bindings: ObservationBinding[] = []
   const debug: string[] = []
@@ -148,6 +165,7 @@ function bindObsNodes(nodes: ObservationNode[]): { bindings: ObservationBinding[
   return { bindings, debugNotes: debug }
 }
 
+/** M4 – Step 3: Nodes + Bindings → Patterns。ノード組み合わせからパターンを引き上げる。 */
 function liftObsPatterns(nodes: ObservationNode[], bindings: ObservationBinding[]): { liftedPatterns: ObservationPattern[]; debugNotes: string[] } {
   const patterns: ObservationPattern[] = []
   const debug: string[] = []
@@ -173,6 +191,7 @@ function liftObsPatterns(nodes: ObservationNode[], bindings: ObservationBinding[
   return { liftedPatterns: patterns, debugNotes: debug }
 }
 
+/** M4 – Step 4: Nodes + Features → ObservationStateVector。ノード状況を状態ベクトルに集約する。 */
 function analyzeObsField(nodes: ObservationNode[], features: EventFeatures): { stateVector: ObservationStateVector; debugNotes: string[] } {
   const hasNode = (id: string) => nodes.some((n) => n.id === id)
 
@@ -225,6 +244,13 @@ function analyzeObsField(nodes: ObservationNode[], features: EventFeatures): { s
   return { stateVector, debugNotes: ['Observation field analyzed.'] }
 }
 
+/**
+ * M4: Measured (EventFeatures + ObservationContext) → Nodes
+ *
+ * ObservationInput を受け取り、4段階の変換（ノード発火 → バインディング →
+ * パターン引き上げ → 状態ベクトル集約）を経て ObservationPipelineResult を返す。
+ * 各ステップの詳細は retrieveObsNodes / bindObsNodes / liftObsPatterns / analyzeObsField を参照。
+ */
 export function runObservationPipeline(input: ObservationInput): ObservationPipelineResult {
   const start = now()
   const { activatedNodes, suppressedNodes, debugNotes: dn1 } = retrieveObsNodes(input.features)
