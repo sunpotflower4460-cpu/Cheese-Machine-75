@@ -1,84 +1,56 @@
-# Node-AI-Z
+# Cheese Machine 75
 
-結晶思考モデルを観察・体験・自己修正していくための実験アプリです。Node / Home / Revision / Memory を通じて、育つ知性の構造を見ていきます。
+**Cheese Machine 75 is an observation, interpretation, and recording app built on Node-AI-Z.**
 
-## コンセプト
+## Concept
 
-Node-AI-Z は、固定人格の AI を完成品として置くためのアプリではありません。
-入力に対して、場の判断 → 反応 → 姿勢 → Home への帰還 → 発話 → Self-Revision という流れを通し、応答がその都度「結晶化」することを観察するための環境です。
+Cheese Machine 75 is not an emotional support tool. It is an observation platform designed for detecting, interpreting, and archiving particle detection events from low-cost camera sensors (e.g., Raspberry Pi cameras acting as makeshift particle detectors).
 
-目指しているのは、ただ正しく返す AI ではなく、反応し、戻り、少しずつ育つ AI です。
-そのためにアプリは二層構造になっています。
+Where Node-AI-Z maps emotional states to a field of nodes, Cheese Machine 75 maps event features — brightness, linearity, noise, rarity — to an observation node field. The pipeline produces structured interpretations, caution flags, and revision histories for each detected event.
 
-- **観察研究モード**: 内部プロセスを見て、構造・修正候補・変化を研究する
-- **体験モード**: 表面では自然に話しつつ、裏側では同じ pipeline / home / revision / memory を動かして記録する
+The philosophy: **don't overclaim**. Rare signals are interesting; they are not proof. Every event gets a guide, a home/caution check, and a memory link to similar events.
 
-「分析 UI」そのものが目的ではなく、**育つ知性を観察する実験場**であることが、このリポジトリの中心です。
+## Relationship to Node-AI-Z
 
-## 現在の構成
+Cheese Machine 75 is built on the Node-AI-Z pipeline architecture:
 
-### Node Pipeline
-入力テキストから Node を活性化し、Binding / Pattern / State Vector を立ち上げる基礎層です。反応の材料を決めます。
+| Node-AI-Z Layer | Cheese Machine 75 Layer |
+|---|---|
+| Text → Emotional nodes | Image features → Observation nodes |
+| Node bindings | Observation bindings |
+| Pattern lift | Pattern lift (particle / artifact / geometry) |
+| State vector | Observation state vector |
+| Home return / caution | Home check (artifact risk, claim softening) |
+| Guide / utterance | Observation guide bundle |
+| Self-revision | Crystal revision history |
+| Memory | Archive + similar event links |
 
-### Home Layer
-過剰反応や断定をそのまま返さないための帰還層です。homeCheck と return adjustment によって、返答前に一度「戻る」処理をかけます。
+## The 4 Layers
 
-### Studio ViewModel
-Pipeline の結果を観察 UI 向けに整形する層です。Reply / Home / Pattern / Internal Process / Guide Observe など、研究表示に必要な情報をまとめます。
+1. **Raw** — extracted event features: brightness, length, width, linearity, curvature, scatter, cluster, rarity, noise
+2. **Measured** — activated observation nodes, bindings, and lifted patterns
+3. **Inferred** — guide bundle: quick guide, deep guide, bridge guide, caution notes
+4. **Revised** — revision history, recheck flags, memory links to similar crystals
 
-### Self-Revision / Memory Layer
-返答ごとに revision entry と変更候補を生成し、memory に蓄積します。ユーザーが keep / soften / revert / lock を選べる形で、可視な自己修正を支えます。
+## What the MVP Can Do
 
-### Observe Mode
-既存の Node Studio UI をベースにした研究ビューです。Node / Relation / Pattern / Home / Revision を横断的に観察できます。
+- Load and cycle through sample particle detection events
+- Run the full observation pipeline on each event
+- Display activated nodes, bindings, and lifted patterns
+- Render a guide bundle (quick/deep/bridge + caution notes)
+- Apply a home/caution check (prevents overclaiming)
+- Save events as **observation crystals** to localStorage
+- View crystal archive with sorting
+- Full event detail view with raw/inferred/revised layers
+- Lab view for comparing two events side by side
+- Studio view showing the full internal pipeline process
+- SVG overlay visualization with measured/predicted/simulated tracks
 
-### Experience Mode
-自然に話すための入口です。表面はチャット風でも、返答生成には既存の pipeline / home / revision を使い、結果は研究モードへ戻せます。
+## Future Plans
 
-## モード説明
-
-### 観察研究モード
-内部構造を見るためのモードです。Node Studio として、反応・構造・修正・帰還を観察し、実験や比較に使います。
-
-### 体験モード
-AI と自然に話すためのモードです。ただし裏では各発話ごとに pipeline が走り、homeCheck / revision candidate / memory が記録されます。必要になったら「観察で見る」から研究ビューに戻れます。
-
-## 現在実装済み
-
-- Node Pipeline による node retrieval / relation binding / pattern lifting / state analysis
-- Home Layer による return 判定と返答トーン調整
-- Studio ViewModel による研究 UI 向け表示整形
-- Reply / States / Relations / Patterns / Home / History / Revision タブ
-- Self-Revision entry の生成、memory 蓄積、tuning アクション
-- **観察研究モード / 体験モードの切り替え**
-- 体験モードの疑似対話（`runNodePipeline` + `buildStudioViewModel` + `adjustedReplyPreview`）
-- 体験モード会話のセッション保持と localStorage 保存
-- 体験モードから観察研究モードへ戻る導線
-
-## 今後の予定
-
-- SRM-2 への進行
-- plasticity の本格反映
-- memory の昇格と整理ロジック強化
-- tuning UI の強化
-- より自然な体験会話と対話継続性の向上
-
-## 開発メモ / 哲学
-
-このアプリは、分析して終わるためのものではありません。変化を観察しながら、戻したり、比べたり、一緒に育てるためのものです。
-
-AI が勝手に不可視な形で変わるのではなく、**変化が見えること・戻せること・共同で育てられること**を重視しています。
-
-## セットアップ
-
-```bash
-npm ci
-npm run dev
-```
-
-## 検証コマンド
-
-```bash
-npm run build
-npm run lint
-```
+- Real camera frame capture and image processing
+- Cross-device correlation via shared session IDs
+- Monte Carlo simulation overlay comparison
+- Cloud archive with user accounts
+- Statistical baseline characterization across many events
+- Export to standard particle physics formats (HepMC, ROOT-compatible CSV)
