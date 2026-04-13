@@ -1,0 +1,59 @@
+// Home/caution check for observation pipeline
+// Purpose: prevent exciting findings from being over-claimed
+// Parallel to homeLayer.ts but for observation domain
+
+import type { ObservationHomeCheck, ObservationPipelineResult } from '../../types/observation'
+
+export function buildObservationHomeCheck(result: ObservationPipelineResult): ObservationHomeCheck {
+  const { stateVector, activatedNodes } = result
+  const hasNode = (id: string) => activatedNodes.some((n) => n.id === id)
+  const reasons: string[] = []
+
+  let cautionUp = false
+  let softenClaim = false
+  let holdAsInteresting = false
+  let keepAsStrongCandidate = false
+
+  // If noise is too high, raise caution
+  if (stateVector.noiseLevel > 0.55) {
+    cautionUp = true
+    reasons.push(`Noise level ${stateVector.noiseLevel.toFixed(2)} exceeds threshold.`)
+  }
+
+  // Rarity alone should not make a strong claim
+  if (stateVector.raritySignal > 0.7 && stateVector.confidence < 0.6) {
+    softenClaim = true
+    holdAsInteresting = true
+    reasons.push('High rarity but insufficient confidence to claim strong candidate.')
+  }
+
+  // Artifact risk suppresses particle claims
+  if (stateVector.artifactRisk > 0.5 && stateVector.claimStrength > 0.6) {
+    softenClaim = true
+    cautionUp = true
+    reasons.push(`Artifact risk (${stateVector.artifactRisk.toFixed(2)}) is too high for strong particle claim.`)
+  }
+
+  // Guide text should not be too assertive if confidence is low
+  if (stateVector.claimStrength > 0.7 && stateVector.confidence < 0.55) {
+    softenClaim = true
+    reasons.push('Claim strength exceeds confidence level – soften language.')
+  }
+
+  // Allow strong candidate only if all conditions are favorable
+  if (
+    stateVector.particleLikelihood > 0.65 &&
+    stateVector.confidence > 0.6 &&
+    stateVector.artifactRisk < 0.35 &&
+    !hasNode('likely_sensor_artifact')
+  ) {
+    keepAsStrongCandidate = true
+    holdAsInteresting = true
+    reasons.push('All indicators favorable for strong particle candidate.')
+  } else if (!cautionUp && !softenClaim) {
+    holdAsInteresting = true
+    reasons.push('Moderately interesting event, no critical cautions.')
+  }
+
+  return { cautionUp, softenClaim, holdAsInteresting, keepAsStrongCandidate, reasons }
+}
