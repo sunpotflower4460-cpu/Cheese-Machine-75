@@ -1,10 +1,10 @@
 import type { Dispatch, SetStateAction } from 'react'
-import { Activity, ChevronDown, ChevronUp, Globe, HeartPulse, Home, MessageSquareText, Search, Timer } from 'lucide-react'
+import { Activity, ChevronDown, ChevronUp, Globe, ShieldAlert, Home, FileText, Search, Timer } from 'lucide-react'
 import type { StudioViewModel, RevisionEntry, UserTuningAction } from '../../types/nodeStudio'
 import { Badge, OriginBadge, TabHeader, VoiceLabel } from '../components/CommonUI'
 import { SelfRevisionCard } from '../components/SelfRevisionCard'
 
-type ReplyTabProps = {
+type InterpretationTabProps = {
   studioView: StudioViewModel
   analyzedText: string
   isProcessOpen: boolean
@@ -13,7 +13,8 @@ type ReplyTabProps = {
   onTuningAction?: (entryId: string, changeId: string, action: UserTuningAction) => void
 }
 
-export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcessOpen, currentRevisionEntry, onTuningAction }: ReplyTabProps) => {
+/** Formerly ReplyTab – renamed to InterpretationTab for the observation domain */
+export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcessOpen, currentRevisionEntry, onTuningAction }: InterpretationTabProps) => {
   const handleTuningAction = (changeId: string, action: UserTuningAction) => {
     if (onTuningAction && currentRevisionEntry) {
       onTuningAction(currentRevisionEntry.id, changeId, action)
@@ -22,15 +23,15 @@ export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcess
 
   return (
     <div className="flex flex-col gap-6">
-      <TabHeader title="Reply" description="この入力に現状どう返すか / どういうプロセスでそうなったか" icon={MessageSquareText} colorClass="border-purple-100 text-purple-900" />
+      <TabHeader title="Guide / Interpretation" description="Current interpretation output for this input, and the internal process that produced it" icon={FileText} colorClass="border-purple-100 text-purple-900" />
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2.5 flex items-center gap-1.5"><Search className="w-3.5 h-3.5" /> Input Full Text</h3>
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2.5 flex items-center gap-1.5"><Search className="w-3.5 h-3.5" /> Input Text</h3>
         <p className="text-slate-800 font-medium text-[16px] md:text-[18px] leading-relaxed">"{analyzedText}"</p>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5"><Activity className="w-3.5 h-3.5" /> 心の流れの要約</h3>
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5"><Activity className="w-3.5 h-3.5" /> Pipeline Flow Summary</h3>
         <p className="text-[15px] text-slate-700 leading-relaxed font-medium whitespace-pre-wrap">{studioView.flowSummaryText}</p>
       </div>
 
@@ -42,16 +43,16 @@ export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcess
           {studioView.homeCheck.needsReturn ? (
             <div className="flex flex-col gap-3 mt-4">
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl relative">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Before Return (直感的な過剰整理)</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Before Caution Check (raw interpretation)</span>
                 <p className="text-slate-500 line-through text-[14px] leading-relaxed">{studioView.rawReplyPreview}</p>
               </div>
               <div className="flex items-center justify-center -my-3 z-10 relative">
                 <span className="bg-pink-100 text-pink-800 text-[10px] font-bold px-3 py-1.5 rounded-full border border-pink-200 shadow-sm flex items-center gap-1.5">
-                  <HeartPulse className="w-3.5 h-3.5" /> Home Layer: {studioView.homeCheck.homePhrase}
+                  <ShieldAlert className="w-3.5 h-3.5" /> Caution Layer: {studioView.homeCheck.homePhrase}
                 </span>
               </div>
               <div className="p-5 bg-purple-50 border border-purple-200 rounded-xl shadow-sm">
-                <span className="text-[10px] font-bold text-purple-600 uppercase tracking-widest block mb-2">After Return (戻ってから話した言葉)</span>
+                <span className="text-[10px] font-bold text-purple-600 uppercase tracking-widest block mb-2">After Caution Check (adjusted interpretation)</span>
                 <p className="text-purple-900 font-semibold text-[16px] leading-relaxed border-l-4 border-purple-300 pl-4">{studioView.adjustedReplyPreview}</p>
               </div>
             </div>
@@ -63,20 +64,20 @@ export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcess
 
       {studioView.homeCheck.needsReturn ? (
         <div className="bg-pink-50/50 rounded-2xl shadow-sm border border-pink-100 p-5">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-pink-600 mb-4 flex items-center gap-1.5"><Home className="w-3.5 h-3.5" /> Home Return (返答前の調整)</h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-pink-600 mb-4 flex items-center gap-1.5"><Home className="w-3.5 h-3.5" /> Caution Check (claim softened before guide output)</h3>
           <div className="flex flex-col md:flex-row gap-6 items-start">
             <div className="flex-1 flex flex-col gap-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase">Return Reason</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Caution Reason</span>
               <span className="text-sm font-bold text-slate-800">{studioView.homeCheck.reason} ({studioView.homeCheck.returnMode})</span>
             </div>
             <div className="flex-1 flex flex-col gap-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase">Released (手放したもの)</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Suppressed (over-claim risk)</span>
               <div className="flex flex-wrap gap-1.5">
                 {studioView.homeCheck.released.map((released, index) => <Badge key={index} colorClass="bg-white text-slate-500 border border-slate-200 line-through">{released}</Badge>)}
               </div>
             </div>
             <div className="flex-1 flex flex-col gap-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase">Preserved (残したもの)</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Preserved (kept in guide)</span>
               <div className="flex flex-wrap gap-1.5">
                 {studioView.homeCheck.preserved.map((preserved, index) => <Badge key={index} colorClass="bg-pink-100 text-pink-700 border border-pink-200">{preserved}</Badge>)}
               </div>
@@ -86,20 +87,20 @@ export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcess
       ) : null}
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> Response Meta</h3>
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> Interpretation Meta</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5 p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-[10px] font-bold text-slate-500 uppercase flex items-center justify-between">Reply Temperature</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase">Interpretation Confidence</span>
             <span className="text-sm font-semibold text-slate-800">{studioView.responseMeta.temperature}</span>
           </div>
           <div className="flex flex-col gap-1.5 p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-[10px] font-bold text-slate-500 uppercase flex items-center justify-between">Estimated Time</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase">Estimated Processing Time</span>
             <span className="text-sm font-semibold text-slate-800 flex items-center gap-1"><Timer className="w-4 h-4 text-slate-400" /> {studioView.responseMeta.time}</span>
           </div>
           <div className="flex flex-col gap-2 p-4 bg-red-50/50 rounded-xl border border-red-100 md:col-span-2">
             <div className="flex justify-between items-start">
-              <span className="text-[10px] font-bold text-red-500 uppercase">What was withheld (あえてしなかったこと)</span>
-              <OriginBadge origin={studioView.homeCheck.needsReturn ? '急がない判断' : '安全寄り補正'} />
+              <span className="text-[10px] font-bold text-red-500 uppercase">What was withheld (over-claim suppressed)</span>
+              <OriginBadge origin={studioView.homeCheck.needsReturn ? 'caution applied' : 'safe baseline'} />
             </div>
             <span className="text-sm font-semibold text-red-900">{studioView.responseMeta.withheld}</span>
           </div>
@@ -135,7 +136,7 @@ export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcess
         <div className="relative z-10">
           <div className="flex justify-between items-start">
             <VoiceLabel type="guide" />
-            <OriginBadge origin="Guide観測" />
+            <OriginBadge origin="Guide observation" />
           </div>
           <div className="flex flex-col gap-4 mt-2">
             <div className="bg-white rounded-xl p-4 border border-indigo-100/50 shadow-sm">
@@ -143,7 +144,7 @@ export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcess
               <p className="text-[14px] text-slate-700 font-medium leading-relaxed">{studioView.guideObserves.summary}</p>
             </div>
             <div className="bg-white rounded-xl p-4 border border-indigo-100/50 shadow-sm">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-2">Naturalness Advice (自然さへの助言)</h4>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-2">Naturalness / Calibration Advice</h4>
               <p className="text-[14px] text-slate-700 font-bold leading-relaxed">{studioView.guideObserves.naturalnessAdvice}</p>
               {studioView.guideObserves.tags.length > 0 ? (
                 <div className="flex flex-wrap gap-2 mt-3">

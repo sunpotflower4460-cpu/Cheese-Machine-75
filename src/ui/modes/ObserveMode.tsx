@@ -18,7 +18,7 @@ const SAMPLE_INPUTS = [
   '少しだけ希望はある気がする',
 ]
 
-type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision'
+type ActiveTab = 'Guide' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision'
 type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision'
 
 type ObserveModeProps = {
@@ -44,7 +44,7 @@ export const ObserveMode = ({
 }: ObserveModeProps) => {
   const [inputText, setInputText] = useState(currentObservation?.text ?? '')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [activeTab, setActiveTab] = useState<ActiveTab>('Reply')
+  const [activeTab, setActiveTab] = useState<ActiveTab>('Guide')
   const [isRawOpen, setIsRawOpen] = useState(false)
   const [rawViewMode, setRawViewMode] = useState<RawViewMode>('pipeline')
   const [isProcessOpen, setIsProcessOpen] = useState(true)
@@ -59,7 +59,7 @@ export const ObserveMode = ({
 
     window.setTimeout(() => {
       onAnalyze(trimmed)
-      setActiveTab('Reply')
+      setActiveTab('Guide')
       setIsAnalyzing(false)
     }, 400)
   }
@@ -70,7 +70,7 @@ export const ObserveMode = ({
 
     window.setTimeout(() => {
       onAnalyze(text)
-      setActiveTab('Reply')
+      setActiveTab('Guide')
       setIsAnalyzing(false)
     }, 400)
   }
@@ -78,7 +78,7 @@ export const ObserveMode = ({
   const handleRestore = (item: ObservationRecord) => {
     setInputText(item.text)
     onRestore(item)
-    setActiveTab('Reply')
+    setActiveTab('Guide')
     setIsRawOpen(false)
   }
 
@@ -168,14 +168,14 @@ export const ObserveMode = ({
         <>
           <div className="flex min-w-0 flex-col gap-6">
             <div className="scrollbar-hide sticky top-[92px] z-10 flex gap-2 overflow-x-auto border-b-2 border-slate-100 bg-[#F8FAFC] pb-1 pt-1">
-              {(['Reply', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
+              {(['Guide', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
                   className={`-mb-[2px] flex items-center gap-2 whitespace-nowrap border-b-2 px-5 py-3 text-[15px] font-bold transition-colors ${activeTab === tab ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'}`}
                 >
-                  {tab === 'Reply' ? <MessageSquareText className="h-4.5 w-4.5" /> : null}
+                  {tab === 'Guide' ? <MessageSquareText className="h-4.5 w-4.5" /> : null}
                   {tab === 'Home' ? <Home className="h-4.5 w-4.5" /> : null}
                   {tab === 'Relations' ? <GitPullRequest className="h-4.5 w-4.5" /> : null}
                   {tab === 'Revision' ? <RefreshCw className="h-4.5 w-4.5" /> : null}
@@ -185,7 +185,7 @@ export const ObserveMode = ({
             </div>
 
             <div className="flex flex-col">
-              {activeTab === 'Reply' ? <ReplyTab studioView={studioView} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} onTuningAction={onTuningAction} /> : null}
+              {activeTab === 'Guide' ? <ReplyTab studioView={studioView} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} onTuningAction={onTuningAction} /> : null}
               {activeTab === 'Home' ? <HomeTab studioView={studioView} /> : null}
               {activeTab === 'States' ? <StatesTab pipelineResult={pipelineResult} /> : null}
               {activeTab === 'Relations' ? <RelationsTab pipelineResult={pipelineResult} /> : null}

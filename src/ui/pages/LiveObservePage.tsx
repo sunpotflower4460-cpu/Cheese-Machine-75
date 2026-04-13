@@ -82,8 +82,13 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
               }`}
             >
               <Layers size={12} />
-              {showOverlay ? 'Hide overlay' : 'Show overlay'}
+              {showOverlay ? 'Hide inferred overlay' : 'Show inferred overlay'}
             </button>
+            {showOverlay && (
+              <p className="mt-1 text-slate-600 text-xs text-center leading-tight">
+                — measured &nbsp; ╌╌ predicted &nbsp; ··· simulated
+              </p>
+            )}
           </div>
 
           {/* State vector mini */}
