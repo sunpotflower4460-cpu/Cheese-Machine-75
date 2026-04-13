@@ -146,12 +146,17 @@ export type OverlayHypothesis = {
 export type ObservationCrystal = {
   id: string
   createdAt: string
+  // ----- Raw 層 -----
   rawImageUri: string          // placeholder or base64
   overlayImageUri: string      // placeholder or base64
+  // ----- Measured 層 (M2 出力) -----
   features: EventFeatures
+  // ----- Inferred 層 (M4 出力 + M10 出力) -----
   pipelineResult: ObservationPipelineResult
   guideBundle: GuideBundle
+  // ----- Caution 層 (M8 出力) -----
   homeCheck: ObservationHomeCheck
+  // ----- Revised 層 -----
   revisionHistory: ObservationRevisionEntry[]
   memoryLinks: string[]        // ids of similar crystals
   recheckFlag: boolean

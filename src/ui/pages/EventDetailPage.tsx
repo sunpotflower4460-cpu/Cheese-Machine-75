@@ -41,10 +41,10 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
   const sv = crystal.pipelineResult.stateVector
   const similarCrystals = crystal.memoryLinks.map((id) => crystals.find((c) => c.id === id)).filter((c): c is ObservationCrystal => c !== undefined)
 
-  const TABS: Array<{ id: Tab; label: string }> = [
-    { id: 'raw', label: 'Raw / Measured' },
-    { id: 'inferred', label: 'Inferred' },
-    { id: 'revised', label: 'Revised' },
+  const TABS: Array<{ id: Tab; label: string; layerNote: string }> = [
+    { id: 'raw', label: 'Raw / Measured', layerNote: 'Raw features + activated nodes (M2 → M4)' },
+    { id: 'inferred', label: 'Inferred', layerNote: 'Guide bundle + patterns (M10)' },
+    { id: 'revised', label: 'Revised', layerNote: 'Revision history + similar events' },
   ]
 
   return (
@@ -132,7 +132,7 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-4 border-b border-slate-800">
+        <div className="flex gap-1 mb-1 border-b border-slate-800">
           {TABS.map(({ id, label }) => (
             <button
               key={id}
@@ -147,6 +147,10 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
             </button>
           ))}
         </div>
+        {/* Layer note: どの写像の出力を見ているかを示す */}
+        <p className="text-slate-600 text-xs mb-4">
+          {TABS.find((t) => t.id === tab)?.layerNote}
+        </p>
 
         {/* Tab content */}
         {tab === 'raw' && (
