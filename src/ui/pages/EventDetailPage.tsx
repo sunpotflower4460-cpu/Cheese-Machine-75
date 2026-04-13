@@ -42,11 +42,11 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
   const sv = crystal.pipelineResult.stateVector
   const similarCrystals = crystal.memoryLinks.map((id) => crystals.find((c) => c.id === id)).filter((c): c is ObservationCrystal => c !== undefined)
 
-  const TABS: Array<{ id: Tab; label: string; description: string }> = [
-    { id: 'raw', label: 'Raw', description: 'Source image and capture context' },
-    { id: 'measured', label: 'Measured', description: 'Extracted features, nodes, bindings, state vector' },
-    { id: 'inferred', label: 'Inferred', description: 'Guide bundle, patterns, overlay hypotheses' },
-    { id: 'revised', label: 'Revised', description: 'Revision history and similar events' },
+  const TABS: Array<{ id: Tab; label: string; layerNote: string }> = [
+    { id: 'raw', label: 'Raw', layerNote: 'Raw sensor capture: source image + capture context (no processing)' },
+    { id: 'measured', label: 'Measured', layerNote: 'Extracted features + activated nodes + state vector (M2 → M4)' },
+    { id: 'inferred', label: 'Inferred', layerNote: 'Guide bundle + patterns + overlay hypotheses (M10)' },
+    { id: 'revised', label: 'Revised', layerNote: 'Revision history + memory links + similar events' },
   ]
 
   return (
@@ -121,7 +121,7 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-4 border-b border-slate-800">
+        <div className="flex gap-1 mb-1 border-b border-slate-800">
           {TABS.map(({ id, label }) => (
             <button
               key={id}
@@ -136,9 +136,9 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
             </button>
           ))}
         </div>
-        {/* Tab description */}
-        <p className="text-slate-600 text-xs mb-3 italic">
-          {TABS.find((t) => t.id === tab)?.description}
+        {/* Layer note: shows which mapping stage output is being viewed */}
+        <p className="text-slate-600 text-xs mb-4">
+          {TABS.find((t) => t.id === tab)?.layerNote}
         </p>
 
         {/* Tab content */}

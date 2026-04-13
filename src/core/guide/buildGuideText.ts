@@ -1,13 +1,64 @@
 // Guide text builder for Cheese Machine 75
 // Converts pipeline results into human-readable interpretation guides
 // Philosophy: do not overclaim; show what is seen, why, alternatives, and what is uncertain
+//
+// 写像 M10: Pipeline + Home → Guide
+// このファイルは ObservationPipelineResult と ObservationHomeCheck を受け取り、
+// 人間向けの解釈ガイド (GuideBundle) を生成する。
+//
+// Guide は「断定」ではなく「測定・仮説・保留」を橋渡しするテキスト。
+// Guide の材料 (GuideInput) を明示することで、どこから何が来ているかを追いやすくする。
 
-import type { GuideBundle, ObservationPipelineResult } from '../../types/observation'
+import type { GuideBundle, ObservationHomeCheck, ObservationPipelineResult } from '../../types/observation'
 
-export function buildGuideText(result: ObservationPipelineResult): GuideBundle {
-  const { stateVector, activatedNodes, liftedPatterns, input } = result
+/**
+ * M10 の入力材料をまとめた内部型。
+ * パイプライン結果とホームチェックから、ガイド生成に必要な要素を抽出したもの。
+ */
+type GuideInput = {
+  /** Measured 層由来: 測定された特徴量 */
+  features: ObservationPipelineResult['input']['features']
+  /** Nodes 層由来: 発火した観測ノード */
+  activatedNodes: ObservationPipelineResult['activatedNodes']
+  /** Nodes 層由来: 引き上げられたパターン */
+  liftedPatterns: ObservationPipelineResult['liftedPatterns']
+  /** Inferred 層: 状態ベクトル（信頼度・アーティファクトリスクなど） */
+  stateVector: ObservationPipelineResult['stateVector']
+  /** M8 由来: 慎重度・主張抑制フラグ */
+  homeCheck: ObservationHomeCheck
+}
+
+/** pipelineResult と homeCheck から GuideInput を構築するヘルパー */
+function buildGuideInput(result: ObservationPipelineResult, homeCheck: ObservationHomeCheck): GuideInput {
+  return {
+    features: result.input.features,
+    activatedNodes: result.activatedNodes,
+    liftedPatterns: result.liftedPatterns,
+    stateVector: result.stateVector,
+    homeCheck,
+  }
+}
+
+/**
+ * M10: Pipeline + Home → Guide
+ *
+ * ObservationPipelineResult と ObservationHomeCheck を受け取り、
+ * quickGuide / deepGuide / bridgeGuide / cautionNotes を含む GuideBundle を返す。
+ *
+ * @param result - M4 の出力 (ObservationPipelineResult)
+ * @param homeCheck - M8 の出力 (ObservationHomeCheck)。省略時は慎重度なしとして扱う。
+ */
+export function buildGuideText(result: ObservationPipelineResult, homeCheck?: ObservationHomeCheck): GuideBundle {
+  // M10 の入力材料を GuideInput として明示する
+  const guideInput: GuideInput = buildGuideInput(result, homeCheck ?? {
+    cautionUp: false,
+    softenClaim: false,
+    holdAsInteresting: false,
+    keepAsStrongCandidate: false,
+    reasons: [],
+  })
+  const { stateVector, activatedNodes, liftedPatterns, features } = guideInput
   const hasNode = (id: string) => activatedNodes.some((n) => n.id === id)
-  const { features } = input
 
   // Quick guide – 1-2 sentences
   let quickGuide = ''

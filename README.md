@@ -25,7 +25,31 @@ Cheese Machine 75 is built on the Node-AI-Z pipeline architecture:
 | Self-revision | Crystal revision history |
 | Memory | Archive + similar event links |
 
-## The 4 Layers
+## Mapping / 写像
+
+Cheese Machine 75 では、観測データは一度に完成するのではなく、
+**複数の層を経て段階的に変換**される。
+この変換の経路を「写像」として明示することで、Guide や Crystal の根拠が追いやすくなる。
+
+「写像」とは、ある情報の世界（例: Raw 画像）を別の情報の世界（例: Measured 特徴量）へ
+変換する責務を指す。コード上では関数・型・コメントによってその境界を可視化している。
+
+### 主要写像
+
+| ID | 名前 | 入力 | 出力 | 実装場所 |
+|---|---|---|---|---|
+| **M2** | EventToMeasured | Event / Raw frame | EventFeatures (Measured) | `extractEventFeatures.ts` |
+| **M4** | MeasuredToNodes | EventFeatures + Context | Nodes / Bindings / Patterns | `runObservationPipeline.ts` |
+| **M8** | StateToCaution | StateVector + Nodes | ObservationHomeCheck | `buildObservationHomeCheck.ts` |
+| **M10** | PipelineToGuide | Pipeline result + HomeCheck | GuideBundle | `buildGuideText.ts` |
+| **M11** | LayersToCrystal | Raw + Measured + Inferred | ObservationCrystal | `buildObservationCrystal.ts` |
+
+これにより、「なぜこの Guide が出たか」「Crystal に何が記録されているか」を
+M2 → M4 → M8 → M10 → M11 の順に遡ることができる。
+
+写像一覧は `src/core/mappings/mappingCatalog.ts` にも辞書として管理している。
+
+
 
 1. **Raw** — raw sensor capture: source image, raw frame, raw log (no processing applied)
 2. **Measured** — extracted features (brightness, linearity, noise, …), activated observation nodes, bindings, lifted patterns, and state vector derived from the raw image
