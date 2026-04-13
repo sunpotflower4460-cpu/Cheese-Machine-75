@@ -13,8 +13,8 @@ type InterpretationTabProps = {
   onTuningAction?: (entryId: string, changeId: string, action: UserTuningAction) => void
 }
 
-/** Formerly ReplyTab – renamed to InterpretationTab for the observation domain */
-export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcessOpen, currentRevisionEntry, onTuningAction }: InterpretationTabProps) => {
+/** Guide/Interpretation tab for the observation domain (file kept as ReplyTab for import compatibility) */
+export const InterpretationTab = ({ studioView, analyzedText, isProcessOpen, setIsProcessOpen, currentRevisionEntry, onTuningAction }: InterpretationTabProps) => {
   const handleTuningAction = (changeId: string, action: UserTuningAction) => {
     if (onTuningAction && currentRevisionEntry) {
       onTuningAction(currentRevisionEntry.id, changeId, action)

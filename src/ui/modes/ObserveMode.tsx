@@ -6,7 +6,7 @@ import { HistoryTab } from '../tabs/HistoryTab'
 import { HomeTab } from '../tabs/HomeTab'
 import { PatternsTab } from '../tabs/PatternsTab'
 import { RelationsTab } from '../tabs/RelationsTab'
-import { ReplyTab } from '../tabs/ReplyTab'
+import { InterpretationTab } from '../tabs/ReplyTab'
 import { StatesTab } from '../tabs/StatesTab'
 import { RevisionTab } from '../tabs/RevisionTab'
 
@@ -185,7 +185,7 @@ export const ObserveMode = ({
             </div>
 
             <div className="flex flex-col">
-              {activeTab === 'Guide' ? <ReplyTab studioView={studioView} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} onTuningAction={onTuningAction} /> : null}
+              {activeTab === 'Guide' ? <InterpretationTab studioView={studioView} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} onTuningAction={onTuningAction} /> : null}
               {activeTab === 'Home' ? <HomeTab studioView={studioView} /> : null}
               {activeTab === 'States' ? <StatesTab pipelineResult={pipelineResult} /> : null}
               {activeTab === 'Relations' ? <RelationsTab pipelineResult={pipelineResult} /> : null}

@@ -86,7 +86,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
             </button>
             {showOverlay && (
               <p className="mt-1 text-slate-600 text-xs text-center leading-tight">
-                — measured &nbsp; ╌╌ predicted &nbsp; ··· simulated
+                Solid: measured | Dashed: predicted | Dotted: simulated
               </p>
             )}
           </div>

@@ -8,11 +8,11 @@ type OverlayCanvasProps = {
   height?: number
 }
 
-/** Kind labels and stroke styles for the three overlay line types */
+/** Kind labels for the three overlay line types */
 const KIND_LABELS: Record<OverlayHypothesis['kind'], string> = {
-  measured: 'Measured (actual track)',
-  predicted: 'Predicted (AI hypothesis)',
-  simulated: 'Simulated (model curve)',
+  measured: 'Actual track',
+  predicted: 'AI hypothesis',
+  simulated: 'Model curve',
 }
 
 export function OverlayCanvas({ rawImageUri, hypotheses, showOverlay, width = 300, height = 200 }: OverlayCanvasProps) {
