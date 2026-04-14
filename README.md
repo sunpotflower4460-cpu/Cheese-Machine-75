@@ -40,12 +40,18 @@ Cheese Machine 75 では、観測データは一度に完成するのではな�
 |---|---|---|---|---|
 | **M2** | EventToMeasured | Event / Raw frame | EventFeatures (Measured) | `extractEventFeatures.ts` |
 | **M4** | MeasuredToNodes | EventFeatures + Context | Nodes / Bindings / Patterns | `runObservationPipeline.ts` |
+| **M6** | NodesToStateVector | Nodes / Bindings / Patterns / Features | ObservationStateVector | `buildObservationStateVector.ts` |
 | **M8** | StateToCaution | StateVector + Nodes | ObservationHomeCheck | `buildObservationHomeCheck.ts` |
 | **M10** | PipelineToGuide | Pipeline result + HomeCheck | GuideBundle | `buildGuideText.ts` |
 | **M11** | LayersToCrystal | Raw + Measured + Inferred | ObservationCrystal | `buildObservationCrystal.ts` |
 
 これにより、「なぜこの Guide が出たか」「Crystal に何が記録されているか」を
-M2 → M4 → M8 → M10 → M11 の順に遡ることができる。
+M2 → M4 → M6 → M8 → M10 → M11 の順に遡ることができる。
+
+特に M6 では、Nodes / Bindings / Patterns / Features を
+ObservationStateVector（confidence, artifactRisk, particleLikelihood, caution など）へ写像する。
+そのため Guide の根拠は「測定値からノードを立てる」だけでなく、
+「そのノード場がどの状態ベクトルを作ったか」まで追える。
 
 写像一覧は `src/core/mappings/mappingCatalog.ts` にも辞書として管理している。
 
