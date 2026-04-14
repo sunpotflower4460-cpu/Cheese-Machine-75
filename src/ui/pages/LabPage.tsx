@@ -104,6 +104,40 @@ export function LabPage({ crystals, navigate }: LabPageProps) {
                   ))}
                 </div>
 
+                {/* Caution comparison */}
+                <div className="bg-slate-800 border border-amber-800/40 rounded-lg p-3 mb-4">
+                  <p className="text-slate-500 text-xs uppercase tracking-wide mb-3">Caution Check Comparison</p>
+                  <div className="grid grid-cols-2 gap-4 text-xs">
+                    {[
+                      { label: 'A', crystal: crystalA },
+                      { label: 'B', crystal: crystalB },
+                    ].map(({ label, crystal }) => (
+                      <div key={label}>
+                        <p className="text-slate-400 font-semibold mb-1">Event {label}</p>
+                        <div className="flex flex-wrap gap-1 mb-1">
+                          {crystal.homeCheck.cautionUp && (
+                            <span className="bg-red-900/40 text-red-300 border border-red-800/40 px-1.5 py-0.5 rounded text-xs">cautionUp</span>
+                          )}
+                          {crystal.homeCheck.softenClaim && (
+                            <span className="bg-amber-900/40 text-amber-300 border border-amber-800/40 px-1.5 py-0.5 rounded text-xs">softenClaim</span>
+                          )}
+                          {crystal.homeCheck.holdAsInteresting && (
+                            <span className="bg-blue-900/40 text-blue-300 border border-blue-800/40 px-1.5 py-0.5 rounded text-xs">holdAsInteresting</span>
+                          )}
+                          {crystal.homeCheck.keepAsStrongCandidate && (
+                            <span className="bg-green-900/40 text-green-300 border border-green-800/40 px-1.5 py-0.5 rounded text-xs">keepAsStrongCandidate</span>
+                          )}
+                        </div>
+                        <div className="text-slate-600 space-y-0.5">
+                          {crystal.homeCheck.reasons.slice(0, 2).map((r, i) => (
+                            <p key={i}>• {r}</p>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Notes */}
                 <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
                   <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Comparison Notes</p>

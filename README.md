@@ -57,10 +57,10 @@ ObservationStateVector（confidence, artifactRisk, particleLikelihood, caution �
 
 
 
-1. **Raw** — raw images, raw frames, raw logs
-2. **Measured** — extracted features, detected lines, numerical analysis results
-3. **Inferred** — guide bundle, overlay hypotheses, pattern interpretation, caution notes
-4. **Revised** — revision history, recheck flags, memory links to similar crystals
+1. **Raw** — raw sensor capture: source image, raw frame, raw log (no processing applied)
+2. **Measured** — extracted features (brightness, linearity, noise, …), activated observation nodes, bindings, lifted patterns, and state vector derived from the raw image
+3. **Inferred** — guide bundle (quick guide, deep guide, bridge guide), overlay hypotheses, pattern interpretations, and caution-annotated interpretations produced by the pipeline
+4. **Revised** — revision history, re-evaluation memos, memory links to similar crystals, recheck flags, and post-evaluation updates
 
 ## What the MVP Can Do
 

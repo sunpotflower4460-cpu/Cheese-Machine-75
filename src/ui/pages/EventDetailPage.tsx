@@ -8,7 +8,7 @@ import { RevisionTimeline } from '../components/RevisionTimeline'
 import { ConfidenceBadge } from '../components/ConfidenceBadge'
 import { buildOverlayHypothesis } from '../../core/simulation/buildOverlayHypothesis'
 import { EventCard } from '../components/EventCard'
-import { Layers, ChevronLeft, Tag, Cpu } from 'lucide-react'
+import { Layers, ChevronLeft, Tag, Cpu, AlertTriangle } from 'lucide-react'
 
 type EventDetailPageProps = {
   crystal: ObservationCrystal | null
@@ -17,7 +17,8 @@ type EventDetailPageProps = {
   navigateToEvent: (id: string) => void
 }
 
-type Tab = 'raw' | 'inferred' | 'revised'
+/** Crystal detail tabs aligned to the 4 observation layers */
+type Tab = 'raw' | 'measured' | 'inferred' | 'revised'
 
 export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }: EventDetailPageProps) {
   const [tab, setTab] = useState<Tab>('raw')
@@ -42,9 +43,10 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
   const similarCrystals = crystal.memoryLinks.map((id) => crystals.find((c) => c.id === id)).filter((c): c is ObservationCrystal => c !== undefined)
 
   const TABS: Array<{ id: Tab; label: string; layerNote: string }> = [
-    { id: 'raw', label: 'Raw / Measured', layerNote: 'Raw features + activated nodes (M2 → M4)' },
-    { id: 'inferred', label: 'Inferred', layerNote: 'Guide bundle + patterns (M10)' },
-    { id: 'revised', label: 'Revised', layerNote: 'Revision history + similar events' },
+    { id: 'raw', label: 'Raw', layerNote: 'Raw sensor capture: source image + capture context (no processing)' },
+    { id: 'measured', label: 'Measured', layerNote: 'Extracted features + activated nodes + state vector (M2 → M4)' },
+    { id: 'inferred', label: 'Inferred', layerNote: 'Guide bundle + patterns + overlay hypotheses (M10)' },
+    { id: 'revised', label: 'Revised', layerNote: 'Revision history + memory links + similar events' },
   ]
 
   return (
@@ -84,7 +86,7 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
           ))}
         </div>
 
-        {/* Image */}
+        {/* Image + overlay (quick view above tabs) */}
         <div className="flex items-start gap-4 mb-6">
           <div>
             <OverlayCanvas
@@ -101,32 +103,19 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
               }`}
             >
               <Layers size={12} />
-              {showOverlay ? 'Hide overlay' : 'Show overlay'}
+              {showOverlay ? 'Hide inferred overlay' : 'Show inferred overlay'}
             </button>
           </div>
           <div className="flex-1 space-y-2">
-            <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
-              <p className="text-slate-500 text-xs mb-2 uppercase tracking-wide">Context</p>
-              <dl className="space-y-1 text-xs">
-                <div className="flex justify-between">
-                  <dt className="text-slate-500">Device</dt>
-                  <dd className="text-slate-300 font-mono">{crystal.pipelineResult.input.context.deviceId}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-slate-500">Timestamp</dt>
-                  <dd className="text-slate-300 font-mono">{crystal.pipelineResult.input.context.timestamp}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-slate-500">Exposure</dt>
-                  <dd className="text-slate-300 font-mono">{crystal.pipelineResult.input.context.exposureMs}ms</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-slate-500">Recheck</dt>
-                  <dd className={crystal.recheckFlag ? 'text-amber-400' : 'text-green-400'}>
-                    {crystal.recheckFlag ? 'Yes' : 'No'}
-                  </dd>
-                </div>
-              </dl>
+            {/* Recheck status badge */}
+            <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 text-xs">
+              <div className="flex justify-between mb-1">
+                <span className="text-slate-500 uppercase tracking-wide">Recheck</span>
+                <span className={crystal.recheckFlag ? 'text-amber-400' : 'text-green-400'}>
+                  {crystal.recheckFlag ? '⚠ Flagged' : '✓ Clear'}
+                </span>
+              </div>
+              <p className="text-slate-600 text-xs">See the <span className="text-slate-400">Raw</span> tab for capture context, <span className="text-slate-400">Measured</span> for features.</p>
             </div>
           </div>
         </div>
@@ -147,15 +136,72 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
             </button>
           ))}
         </div>
-        {/* Layer note: どの写像の出力を見ているかを示す */}
+        {/* Layer note: shows which mapping stage output is being viewed */}
         <p className="text-slate-600 text-xs mb-4">
           {TABS.find((t) => t.id === tab)?.layerNote}
         </p>
 
         {/* Tab content */}
+
+        {/* RAW: source image and capture context */}
         {tab === 'raw' && (
           <div className="space-y-4">
+            <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
+              <p className="text-slate-500 text-xs uppercase tracking-wide mb-3">Source Image</p>
+              <div className="flex gap-4 items-start">
+                <OverlayCanvas
+                  rawImageUri={crystal.rawImageUri}
+                  hypotheses={[]}
+                  showOverlay={false}
+                  width={140}
+                  height={140}
+                />
+                <div className="flex-1 text-xs text-slate-400 space-y-1">
+                  <p>Raw sensor capture — no processing applied.</p>
+                  <p>Use the <span className="text-slate-300">Measured</span> tab to see extracted features.</p>
+                  <p>Use the <span className="text-slate-300">Inferred</span> tab to see the guide and patterns.</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
+              <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Capture Context</p>
+              <dl className="space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Event ID</dt>
+                  <dd className="text-slate-300 font-mono">{crystal.pipelineResult.input.eventId}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Device</dt>
+                  <dd className="text-slate-300 font-mono">{crystal.pipelineResult.input.context.deviceId}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Session</dt>
+                  <dd className="text-slate-300 font-mono">{crystal.pipelineResult.input.context.sessionId}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Timestamp</dt>
+                  <dd className="text-slate-300 font-mono">{crystal.pipelineResult.input.context.timestamp}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Exposure</dt>
+                  <dd className="text-slate-300 font-mono">{crystal.pipelineResult.input.context.exposureMs}ms</dd>
+                </div>
+                {crystal.pipelineResult.input.notes && (
+                  <div className="flex justify-between">
+                    <dt className="text-slate-500">Notes</dt>
+                    <dd className="text-slate-300">{crystal.pipelineResult.input.notes}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          </div>
+        )}
+
+        {/* MEASURED: extracted features, activated nodes, state vector */}
+        {tab === 'measured' && (
+          <div className="space-y-4">
             <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
+              <p className="text-slate-500 text-xs uppercase tracking-wide px-3 pt-2 pb-1">Extracted Features</p>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-700">
@@ -180,16 +226,17 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
               </table>
             </div>
 
-            {/* Active nodes */}
+            {/* Activated nodes */}
             <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
               <p className="text-slate-500 text-xs uppercase tracking-wide mb-2 flex items-center gap-1">
-                <Cpu size={11} /> Activated Nodes
+                <Cpu size={11} /> Activated Observation Nodes
               </p>
               <div className="space-y-1">
                 {crystal.pipelineResult.activatedNodes.map((n) => (
                   <div key={n.id} className="flex items-center justify-between">
                     <span className="text-slate-300 text-xs font-mono">{n.label.replace(/_/g, ' ')}</span>
                     <div className="flex items-center gap-2">
+                      <span className="text-slate-600 text-xs">{n.category}</span>
                       <div className="w-16 h-1 bg-slate-700 rounded-full overflow-hidden">
                         <div className="h-full bg-blue-500" style={{ width: `${Math.round(n.value * 100)}%` }} />
                       </div>
@@ -199,16 +246,30 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
                 ))}
               </div>
             </div>
+
+            {/* State vector */}
+            <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
+              <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">State Vector</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {(Object.entries(sv) as [string, number][]).map(([k, v]) => (
+                  <div key={k} className="flex justify-between">
+                    <span className="text-slate-500">{k}</span>
+                    <span className="text-slate-300 font-mono">{v.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
+        {/* INFERRED: guide bundle, lifted patterns, overlay hypotheses, home check */}
         {tab === 'inferred' && (
           <div className="space-y-4">
             <GuidePanel guide={crystal.guideBundle} />
 
             {crystal.pipelineResult.liftedPatterns.length > 0 && (
               <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
-                <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Lifted Patterns</p>
+                <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Lifted Patterns (Interpretation)</p>
                 {crystal.pipelineResult.liftedPatterns.map((p) => (
                   <div key={p.id} className="mb-2">
                     <div className="flex items-center justify-between">
@@ -220,16 +281,43 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
                 ))}
               </div>
             )}
+
+            {/* Home check result */}
+            <div className="bg-slate-800 border border-amber-800/40 rounded-lg p-3">
+              <p className="text-slate-500 text-xs uppercase tracking-wide mb-2 flex items-center gap-1">
+                <AlertTriangle size={11} className="text-amber-400" /> Caution Check (Home Layer)
+              </p>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {crystal.homeCheck.cautionUp && (
+                  <span className="text-xs bg-red-900/40 text-red-300 border border-red-800/40 px-2 py-0.5 rounded">cautionUp</span>
+                )}
+                {crystal.homeCheck.softenClaim && (
+                  <span className="text-xs bg-amber-900/40 text-amber-300 border border-amber-800/40 px-2 py-0.5 rounded">softenClaim</span>
+                )}
+                {crystal.homeCheck.holdAsInteresting && (
+                  <span className="text-xs bg-blue-900/40 text-blue-300 border border-blue-800/40 px-2 py-0.5 rounded">holdAsInteresting</span>
+                )}
+                {crystal.homeCheck.keepAsStrongCandidate && (
+                  <span className="text-xs bg-green-900/40 text-green-300 border border-green-800/40 px-2 py-0.5 rounded">keepAsStrongCandidate</span>
+                )}
+              </div>
+              <ul className="space-y-0.5">
+                {crystal.homeCheck.reasons.map((r, i) => (
+                  <li key={i} className="text-slate-400 text-xs">• {r}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
 
+        {/* REVISED: revision timeline, similar events, memory links */}
         {tab === 'revised' && (
           <div className="space-y-4">
             <RevisionTimeline entries={crystal.revisionHistory} />
 
             {similarCrystals.length > 0 && (
               <div>
-                <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Similar Events</p>
+                <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Memory Links – Similar Events</p>
                 <div className="space-y-2">
                   {similarCrystals.map((c) => (
                     <EventCard key={c.id} crystal={c} onClick={() => navigateToEvent(c.id)} />
