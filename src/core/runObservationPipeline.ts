@@ -22,7 +22,6 @@ import type {
   ObservationNode,
   ObservationPattern,
   ObservationPipelineResult,
-  ObservationStateVector,
   SuppressedObservationNode,
 } from '../types/observation'
 
