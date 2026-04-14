@@ -384,7 +384,7 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
         <div ref={crystalRef} className={`bg-slate-800 border border-slate-700 rounded-lg p-3 mb-4 ${highlight('crystal')}`}>
           <div className="flex items-center gap-2 mb-2">
             <p className="text-slate-500 text-xs uppercase tracking-wide">Crystal [M11]</p>
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-slate-700/60 text-slate-400 border-slate-600">Raw + Measured + Inferred + Revised</span>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-slate-700/60 text-slate-400 border-slate-600">All Layers</span>
           </div>
           {activeCrystal ? (
             <div className="text-slate-300 text-sm space-y-1">
