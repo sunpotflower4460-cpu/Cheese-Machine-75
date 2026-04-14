@@ -204,7 +204,7 @@ export function runObservationPipeline(input: ObservationInput): ObservationPipe
   const { activatedNodes, suppressedNodes, debugNotes: dn1 } = retrieveObsNodes(input.features)
   const { bindings, debugNotes: dn2 } = bindObsNodes(activatedNodes)
   const { liftedPatterns, debugNotes: dn3 } = liftObsPatterns(activatedNodes, bindings)
-  const { stateVector, debugNotes: dn4 } = buildObservationStateVector({
+  const { stateVector, contributions: stateContributions, debugNotes: dn4 } = buildObservationStateVector({
     nodes: activatedNodes,
     bindings,
     patterns: liftedPatterns,
@@ -219,6 +219,7 @@ export function runObservationPipeline(input: ObservationInput): ObservationPipe
     bindings: bindings.sort((a, b) => b.weight - a.weight),
     liftedPatterns: liftedPatterns.sort((a, b) => b.score - a.score),
     stateVector,
+    stateContributions,
     debugNotes: ['ObservationPipeline start', ...dn1, ...dn2, ...dn3, ...dn4, `Completed in ${elapsedMs.toFixed(2)} ms`],
     meta: { retrievalCount: activatedNodes.length, bindingCount: bindings.length, patternCount: liftedPatterns.length, elapsedMs },
   }

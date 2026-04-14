@@ -62,6 +62,12 @@ ObservationStateVector（confidence, artifactRisk, particleLikelihood, caution �
 3. **Inferred** — guide bundle (quick guide, deep guide, bridge guide), overlay hypotheses, pattern interpretations, and caution-annotated interpretations produced by the pipeline
 4. **Revised** — revision history, re-evaluation memos, memory links to similar crystals, recheck flags, and post-evaluation updates
 
+## Studio traceability
+
+- Studio の Current Mapping Flow は M2/M4/M6/M8/M10/M11 の各ステップへジャンプし、対応セクションをハイライトして確認できます。
+- M6 の ObservationStateVector では features / nodes / patterns を contributor として薄く可視化し、confidence や artifactRisk が立ち上がった根拠を追いやすくしました。
+- Guide と Home Check も同じ写像の流れで辿れるため、「なぜこの Guide になったか」を Studio 上で確認できます。
+
 ## What the MVP Can Do
 
 - Load and cycle through sample particle detection events

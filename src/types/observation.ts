@@ -39,6 +39,16 @@ export type ObservationStateVector = {
   caution: number          // 解釈時に保持すべき慎重度
 }
 
+export type StateContributor = {
+  sourceType: 'feature' | 'node' | 'pattern'
+  sourceId: string
+  label: string
+  weight?: number
+  reason?: string
+}
+
+export type StateContributionMap = Partial<Record<keyof ObservationStateVector, StateContributor[]>>
+
 /** Input to the observation pipeline */
 export type ObservationInput = {
   eventId: string
@@ -56,6 +66,7 @@ export type ObservationPipelineResult = {
   bindings: ObservationBinding[]
   liftedPatterns: ObservationPattern[]
   stateVector: ObservationStateVector
+  stateContributions: StateContributionMap
   debugNotes: string[]
   meta: {
     retrievalCount: number
