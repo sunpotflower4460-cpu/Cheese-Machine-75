@@ -105,8 +105,11 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
           </div>
         )}
 
-        {/* Summary card (Raw focus) */}
+        {/* Summary card (Raw layer) */}
         <div ref={rawRef} className={`bg-slate-800 border border-slate-700 rounded-lg p-4 mb-4 ${highlight('raw')}`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded border bg-slate-700/60 text-slate-400 border-slate-600">Raw</span>
+          </div>
           <div className="flex items-start justify-between mb-2">
             <div>
               <p className="text-white font-semibold">{vm.summaryCard.title}</p>
@@ -188,7 +191,10 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
         {/* Measured (M2) */}
         <div ref={measuredRef} className={`bg-slate-900 border border-slate-700 rounded-lg p-3 mb-4 ${highlight('measured')}`}>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-slate-500 text-xs uppercase tracking-wide">Measured [M2] — Extracted Features</p>
+            <div className="flex items-center gap-2">
+              <p className="text-slate-500 text-xs uppercase tracking-wide">Measured [M2] — Extracted Features</p>
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-green-900/30 text-green-400 border-green-700/40">Measured</span>
+            </div>
             {activeCrystal?.sourceType === 'uploaded-image' && (
               <span className="text-blue-400 text-[10px] bg-blue-900/30 px-2 py-0.5 rounded border border-blue-700/30">
                 from uploaded image
@@ -229,10 +235,13 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
           </div>
         </div>
 
-        {/* Nodes / Patterns (M4) */}
+        {/* Nodes / Patterns (M4) — Inferred */}
         <div ref={nodesRef} className={`space-y-4 ${highlight('nodes')}`}>
           <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Nodes [M4] — Active Signals ({vm.activeSignals.length})</p>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-slate-500 text-xs uppercase tracking-wide">Nodes [M4] — Active Signals ({vm.activeSignals.length})</p>
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-blue-900/30 text-blue-400 border-blue-700/40">Inferred</span>
+            </div>
             <div className="space-y-2">
               {vm.activeSignals.map((s) => (
                 <div key={s.id}>
@@ -266,10 +275,13 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
           )}
         </div>
 
-        {/* State vector with contributors (M6) */}
+        {/* State vector with contributors (M6) — Inferred */}
         <div ref={stateRef} className={`bg-slate-800 border border-slate-700 rounded-lg p-3 mt-4 ${highlight('state')}`}>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-slate-500 text-xs uppercase tracking-wide">State [M6] — Observation State Vector</p>
+            <div className="flex items-center gap-2">
+              <p className="text-slate-500 text-xs uppercase tracking-wide">State [M6] — Observation State Vector</p>
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-blue-900/30 text-blue-400 border-blue-700/40">Inferred</span>
+            </div>
             <p className="text-slate-600 text-[10px]">Feature/Node → State relationships</p>
           </div>
           <div className="space-y-3">
@@ -329,11 +341,14 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
           ))}
         </div>
 
-        {/* Caution notes */}
+        {/* Caution notes — Inferred (M8) */}
         <div ref={cautionRef} className={`bg-slate-800 border border-amber-800/40 rounded-lg p-3 mb-4 ${highlight('caution')}`}>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-2 flex items-center gap-1">
-            <AlertTriangle size={11} className="text-amber-400" /> Home Check
-          </p>
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-slate-500 text-xs uppercase tracking-wide flex items-center gap-1">
+              <AlertTriangle size={11} className="text-amber-400" /> Home Check [M8]
+            </p>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-blue-900/30 text-blue-400 border-blue-700/40">Inferred</span>
+          </div>
           <ul className="space-y-1">
             {vm.cautionSummary.notes.map((note, i) => (
               <li key={i} className="text-slate-300 text-xs">• {note}</li>
@@ -341,9 +356,12 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
           </ul>
         </div>
 
-        {/* Guide preview */}
+        {/* Guide preview — Inferred (M10) */}
         <div ref={guideRef} className={`bg-slate-800 border border-slate-700 rounded-lg p-3 mb-4 ${highlight('guide')}`}>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Guide [M10]</p>
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-slate-500 text-xs uppercase tracking-wide">Guide [M10]</p>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-blue-900/30 text-blue-400 border-blue-700/40">Inferred</span>
+          </div>
           <p className="text-white text-sm font-semibold mb-1">Quick</p>
           <p className="text-slate-300 text-sm mb-2">{vm.guidePreview.quickGuide}</p>
           <p className="text-slate-400 text-xs uppercase tracking-wide mb-1">Deep</p>
@@ -362,9 +380,12 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
           )}
         </div>
 
-        {/* Crystal layer */}
+        {/* Crystal layer — M11 bundles Raw + Measured + Inferred + Revised */}
         <div ref={crystalRef} className={`bg-slate-800 border border-slate-700 rounded-lg p-3 mb-4 ${highlight('crystal')}`}>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Crystal [M11]</p>
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-slate-500 text-xs uppercase tracking-wide">Crystal [M11]</p>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-slate-700/60 text-slate-400 border-slate-600">All Layers</span>
+          </div>
           {activeCrystal ? (
             <div className="text-slate-300 text-sm space-y-1">
               <p>ID: <span className="font-mono text-xs text-slate-400">{activeCrystal.id}</span></p>

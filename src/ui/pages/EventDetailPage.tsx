@@ -43,10 +43,10 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
   const similarCrystals = crystal.memoryLinks.map((id) => crystals.find((c) => c.id === id)).filter((c): c is ObservationCrystal => c !== undefined)
 
   const TABS: Array<{ id: Tab; label: string; layerNote: string }> = [
-    { id: 'raw', label: 'Raw', layerNote: 'Raw sensor capture: source image + capture context (no processing)' },
-    { id: 'measured', label: 'Measured', layerNote: 'Extracted features + activated nodes + state vector (M2 → M4)' },
-    { id: 'inferred', label: 'Inferred', layerNote: 'Guide bundle + patterns + overlay hypotheses (M10)' },
-    { id: 'revised', label: 'Revised', layerNote: 'Revision history + memory links + similar events' },
+    { id: 'raw', label: 'Raw', layerNote: 'Raw sensor capture: source image + capture context (no processing applied)' },
+    { id: 'measured', label: 'Measured', layerNote: 'Directly measured from raw input: extracted features only — Geometry / Shape / Noise / Rarity (M2)' },
+    { id: 'inferred', label: 'Inferred', layerNote: 'Pipeline conclusions from measured data: nodes, bindings, patterns, state vector, caution check, guide bundle, overlay hypotheses (M4–M10)' },
+    { id: 'revised', label: 'Revised', layerNote: 'Post-evaluation: revision history, memory links, recheck flags, similar events' },
   ]
 
   return (
@@ -215,7 +215,7 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
           </div>
         )}
 
-        {/* MEASURED: extracted features, activated nodes, state vector */}
+        {/* MEASURED: extracted features only (M2 output — what is directly measured from raw input) */}
         {tab === 'measured' && (
           <div className="space-y-4">
             {/* Source type hint */}
@@ -286,13 +286,24 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
               </div>
             </div>
 
-            {/* Activated nodes with feature relationships */}
+            <div className="bg-slate-900/60 border border-slate-700 rounded-md p-2">
+              <p className="text-slate-500 text-[11px]">
+                Nodes, bindings, patterns, state vector, and caution check are in the <span className="text-slate-300">Inferred</span> tab — they are conclusions constructed by the pipeline, not direct measurements.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* INFERRED: activated nodes, bindings, patterns, state vector, caution check, guide bundle, overlay hypotheses (M4–M10) */}
+        {tab === 'inferred' && (
+          <div className="space-y-4">
+            {/* Activated nodes */}
             <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-slate-500 text-xs uppercase tracking-wide flex items-center gap-1">
-                  <Cpu size={11} /> Activated Observation Nodes
+                  <Cpu size={11} /> Activated Observation Nodes <span className="text-slate-600 text-[10px] ml-1">[M4]</span>
                 </p>
-                <p className="text-slate-600 text-[10px]">Feature → Node relationships</p>
+                <p className="text-slate-600 text-[10px]">Feature → Node (Inferred)</p>
               </div>
               <div className="space-y-2">
                 {crystal.pipelineResult.activatedNodes.map((n) => {
@@ -335,9 +346,11 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
               </div>
             </div>
 
-            {/* State vector */}
+            {/* State vector (M6) */}
             <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
-              <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">State Vector</p>
+              <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">
+                State Vector <span className="text-slate-600 text-[10px]">[M6 — Inferred]</span>
+              </p>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {(Object.entries(sv) as [string, number][]).map(([k, v]) => (
                   <div key={k} className="flex justify-between">
@@ -347,17 +360,12 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
                 ))}
               </div>
             </div>
-          </div>
-        )}
 
-        {/* INFERRED: guide bundle, lifted patterns, overlay hypotheses, home check */}
-        {tab === 'inferred' && (
-          <div className="space-y-4">
             <GuidePanel guide={crystal.guideBundle} />
 
             {crystal.pipelineResult.liftedPatterns.length > 0 && (
               <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
-                <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Lifted Patterns (Interpretation)</p>
+                <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Lifted Patterns <span className="text-slate-600 text-[10px]">[M4 — Inferred]</span></p>
                 {crystal.pipelineResult.liftedPatterns.map((p) => (
                   <div key={p.id} className="mb-2">
                     <div className="flex items-center justify-between">
@@ -370,10 +378,10 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
               </div>
             )}
 
-            {/* Home check result */}
+            {/* Home check result (M8) */}
             <div className="bg-slate-800 border border-amber-800/40 rounded-lg p-3">
               <p className="text-slate-500 text-xs uppercase tracking-wide mb-2 flex items-center gap-1">
-                <AlertTriangle size={11} className="text-amber-400" /> Caution Check (Home Layer)
+                <AlertTriangle size={11} className="text-amber-400" /> Caution Check <span className="text-slate-600 text-[10px] ml-1">[M8 — Inferred]</span>
               </p>
               <div className="flex flex-wrap gap-2 mb-2">
                 {crystal.homeCheck.cautionUp && (

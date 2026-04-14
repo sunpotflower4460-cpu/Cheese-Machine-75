@@ -42,49 +42,50 @@ export const OBSERVATION_MAPPINGS: MappingDescriptor[] = [
     id: 'M4',
     name: 'MeasuredToNodes',
     inputLabel: 'Measured (EventFeatures) + ObservationContext',
-    outputLabel: 'Nodes (activatedNodes, bindings, liftedPatterns)',
+    outputLabel: 'Inferred: Nodes (activatedNodes, bindings, liftedPatterns)',
     description:
       '測定値と観測コンテキストをもとに観測ノードを発火させ、バインディングとパターンを立てる。' +
-      ' Measured 層から Nodes (Inferred への中間) への変換。',
+      ' Measured 層から Inferred 層への変換。nodes / bindings / patterns は Inferred に属する。',
     implementedIn: 'src/core/runObservationPipeline.ts',
   },
   {
     id: 'M6',
     name: 'NodesToStateVector',
-    inputLabel: 'Nodes / Bindings / Patterns / Features',
-    outputLabel: 'ObservationStateVector',
+    inputLabel: 'Inferred: Nodes / Bindings / Patterns / Measured: Features',
+    outputLabel: 'Inferred: ObservationStateVector',
     description:
       '発火したノード群・その関係・持ち上がったパターンと測定特徴量を束ねて、' +
-      ' confidence / artifactRisk / claimStrength などの観測状態ベクトルへ写像する。',
+      ' confidence / artifactRisk / claimStrength などの観測状態ベクトルへ写像する。' +
+      ' 出力 (StateVector) は Inferred 層に属する。',
     implementedIn: 'src/core/observation/buildObservationStateVector.ts',
   },
   {
     id: 'M8',
     name: 'StateToCaution',
-    inputLabel: 'ObservationStateVector + activated nodes',
-    outputLabel: 'ObservationHomeCheck (cautionUp / softenClaim / holdAsInteresting / keepAsStrongCandidate)',
+    inputLabel: 'Inferred: ObservationStateVector + activated nodes',
+    outputLabel: 'Inferred: ObservationHomeCheck (cautionUp / softenClaim / holdAsInteresting / keepAsStrongCandidate)',
     description:
       'パイプラインが出した状態ベクトルとノード情報から、観測主張の慎重度を判定する。' +
-      ' 過剰な主張を防ぎ、測定の不確実性を適切に伝える層。',
+      ' 過剰な主張を防ぎ、測定の不確実性を適切に伝える層。出力 (HomeCheck) は Inferred 層に属する。',
     implementedIn: 'src/core/observation/buildObservationHomeCheck.ts',
   },
   {
     id: 'M10',
     name: 'PipelineToGuide',
-    inputLabel: 'ObservationPipelineResult + ObservationHomeCheck',
-    outputLabel: 'GuideBundle (quickGuide / deepGuide / bridgeGuide / cautionNotes)',
+    inputLabel: 'Inferred: ObservationPipelineResult + ObservationHomeCheck',
+    outputLabel: 'Inferred: GuideBundle (quickGuide / deepGuide / bridgeGuide / cautionNotes)',
     description:
       'パイプライン結果とホームチェック結果をもとに、人間が読める解釈ガイドを生成する。' +
-      ' 断定ではなく「測定・仮説・保留」を橋渡しする役割を担う。',
+      ' 断定ではなく「測定・仮説・保留」を橋渡しする役割を担う。出力 (GuideBundle) は Inferred 層に属する。',
     implementedIn: 'src/core/guide/buildGuideText.ts',
   },
   {
     id: 'M11',
     name: 'LayersToCrystal',
-    inputLabel: 'Raw + Measured (pipelineResult) + Inferred (guideBundle) + HomeCheck',
-    outputLabel: 'ObservationCrystal',
+    inputLabel: 'Raw (rawImageUri, sourceType) + Measured (features) + Inferred (pipelineResult, guideBundle, homeCheck)',
+    outputLabel: 'ObservationCrystal (Raw + Measured + Inferred + Revised)',
     description:
-      'Raw 画像 URI・測定値・推論結果・ホームチェック・改訂履歴を一つの記録単位（Crystal）にまとめる。' +
+      'Raw 画像 URI・Measured 特徴量・Inferred 推論結果（nodes/state/guide/homeCheck）・改訂履歴を一つの記録単位（Crystal）にまとめる。' +
       ' Crystal は単なる保存データではなく、複数の観測層を束ねた結晶化された記録。',
     implementedIn: 'src/core/buildObservationCrystal.ts',
   },

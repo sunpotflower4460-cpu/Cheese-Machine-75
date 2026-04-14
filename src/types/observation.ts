@@ -1,7 +1,7 @@
 // Observation-specific types for Cheese Machine 75
 // Built on Node-AI-Z pipeline philosophy
 
-/** Raw features extracted from a detected event image/frame */
+/** Raw features extracted from a detected event image/frame (Measured layer — M2 output) */
 export type EventFeatures = {
   brightness: number       // 0–1 overall brightness level
   length: number           // 0–1 normalized track length
@@ -26,7 +26,8 @@ export type ObservationContext = {
 
 /**
  * State vector specific to observation – parallel to Node-AI-Z StateVector.
- * M6 が Nodes / Bindings / Patterns / Features から組み立てる中間的な解釈状態。
+ * Inferred layer — M6 が Nodes / Bindings / Patterns / Features から組み立てる推定状態。
+ * (Measured features を起点に pipeline が構築するため Inferred に属する)
  */
 export type ObservationStateVector = {
   confidence: number       // 解釈全体をどれだけ信用できるか
@@ -49,10 +50,10 @@ export type StateContributor = {
 
 export type StateContributionMap = Partial<Record<keyof ObservationStateVector, StateContributor[]>>
 
-/** Source type for an observation input — distinguishes where the raw input came from */
+/** Source type for an observation input — Raw layer: distinguishes where the raw input came from */
 export type ObservationSourceType = 'sample' | 'uploaded-image' | 'camera'
 
-/** Input to the observation pipeline */
+/** Input to the observation pipeline — bundles Raw and the Measured features derived from it */
 export type ObservationInput = {
   eventId: string
   features: EventFeatures
@@ -62,7 +63,7 @@ export type ObservationInput = {
   sourceType?: ObservationSourceType  // where did this input come from?
 }
 
-/** Full result from the observation pipeline */
+/** Full result from the observation pipeline — Inferred layer (M4 → M6 outputs) */
 export type ObservationPipelineResult = {
   input: ObservationInput
   activatedNodes: ObservationNode[]
@@ -80,7 +81,7 @@ export type ObservationPipelineResult = {
   }
 }
 
-/** A node in the observation node dictionary */
+/** A node in the observation node dictionary — Inferred layer (M4 output) */
 export type ObservationNode = {
   id: string
   label: string
@@ -104,7 +105,7 @@ export type ObservationNodeCategory =
   | 'hypothesis'   // interpretive hypotheses
   | 'system'       // system/fallback nodes
 
-/** Binding between two observation nodes */
+/** Binding between two observation nodes — Inferred layer (M4 output) */
 export type ObservationBinding = {
   id: string
   source: string
@@ -114,7 +115,7 @@ export type ObservationBinding = {
   reasons: string[]
 }
 
-/** A lifted pattern from observation node combinations */
+/** A lifted pattern from observation node combinations — Inferred layer (M4 output) */
 export type ObservationPattern = {
   id: string
   label: string
@@ -123,7 +124,7 @@ export type ObservationPattern = {
   matchedRelations: string[]
 }
 
-/** Guide bundle – the main output shown to the user */
+/** Guide bundle – the main output shown to the user — Inferred layer (M10 output) */
 export type GuideBundle = {
   quickGuide: string       // brief 1-2 sentence summary
   deepGuide: string        // detailed analysis with reasoning
@@ -131,7 +132,7 @@ export type GuideBundle = {
   cautionNotes: string[]   // explicit cautions / alternative interpretations
 }
 
-/** A revision/re-evaluation entry for an observation */
+/** A revision/re-evaluation entry for an observation — Revised layer */
 export type ObservationRevisionEntry = {
   id: string
   crystalId: string        // which crystal this revises
@@ -141,7 +142,7 @@ export type ObservationRevisionEntry = {
   trigger: 'manual' | 'similar_found' | 'recheck_flag'
 }
 
-/** Home/caution check result for observation pipeline */
+/** Home/caution check result for observation pipeline — Inferred layer (M8 output) */
 export type ObservationHomeCheck = {
   cautionUp: boolean           // increase caution display
   softenClaim: boolean         // soften the claim language
@@ -165,22 +166,33 @@ export type OverlayHypothesis = {
   color?: string
 }
 
-/** One complete observation crystal – the unit of storage */
+/** One complete observation crystal – the unit of storage.
+ *
+ * Crystal は複数の観測層を束ねた記録単位:
+ *   Raw      ... sourceType, rawImageUri, overlayImageUri — unprocessed origin
+ *   Measured ... features (EventFeatures) — directly measured from raw input (M2)
+ *   Inferred ... pipelineResult (nodes/bindings/patterns/stateVector), guideBundle, homeCheck — pipeline conclusions (M4–M10)
+ *   Revised  ... revisionHistory, memoryLinks, recheckFlag — post-evaluation updates
+ */
 export type ObservationCrystal = {
   id: string
   createdAt: string
   // ----- Raw 層 -----
-  rawImageUri: string          // placeholder, base64, or object URL
-  overlayImageUri: string      // placeholder or base64
-  sourceType: ObservationSourceType  // where did the raw input come from?
+  // Unprocessed origin: where the raw input came from and the raw image itself
+  rawImageUri: string          // placeholder, base64, or object URL — Raw source
+  overlayImageUri: string      // placeholder or base64 — Raw/overlay reference
+  sourceType: ObservationSourceType  // 'sample' | 'uploaded-image' | 'camera' — Raw origin tag
   // ----- Measured 層 (M2 出力) -----
+  // Directly measured from raw input: numerical feature extraction only
   features: EventFeatures
-  // ----- Inferred 層 (M4 出力 + M10 出力) -----
+  // ----- Inferred 層 (M4–M10 出力) -----
+  // What the pipeline constructs from measured data:
+  // nodes, bindings, patterns, stateVector (M4/M6), homeCheck (M8), guideBundle (M10)
   pipelineResult: ObservationPipelineResult
   guideBundle: GuideBundle
-  // ----- Caution 層 (M8 出力) -----
   homeCheck: ObservationHomeCheck
   // ----- Revised 層 -----
+  // Post-evaluation: revision history, memory links, recheck flags, later updates
   revisionHistory: ObservationRevisionEntry[]
   memoryLinks: string[]        // ids of similar crystals
   recheckFlag: boolean
