@@ -111,6 +111,21 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
             <div>
               <p className="text-white font-semibold">{vm.summaryCard.title}</p>
               <p className="text-slate-400 text-sm">{vm.summaryCard.subtitle}</p>
+              {/* Source type display */}
+              {activeCrystal?.sourceType && (
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span className={`text-[10px] px-2 py-0.5 rounded border ${
+                    activeCrystal.sourceType === 'uploaded-image'
+                      ? 'bg-blue-900/40 text-blue-300 border-blue-700/40'
+                      : 'bg-slate-700 text-slate-400 border-slate-600'
+                  }`}>
+                    {activeCrystal.sourceType === 'uploaded-image' ? 'uploaded image' : activeCrystal.sourceType}
+                  </span>
+                  {activeCrystal.sourceType === 'uploaded-image' && (
+                    <span className="text-slate-500 text-[10px]">Image-derived observation</span>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <ConfidenceBadge value={parseFloat(vm.summaryCard.confidence) / 100} label="conf" size="md" />
@@ -172,14 +187,45 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
 
         {/* Measured (M2) */}
         <div ref={measuredRef} className={`bg-slate-900 border border-slate-700 rounded-lg p-3 mb-4 ${highlight('measured')}`}>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Measured [M2] — Extracted Features</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-slate-500 text-xs uppercase tracking-wide">Measured [M2] — Extracted Features</p>
+            {activeCrystal?.sourceType === 'uploaded-image' && (
+              <span className="text-blue-400 text-[10px] bg-blue-900/30 px-2 py-0.5 rounded border border-blue-700/30">
+                from uploaded image
+              </span>
+            )}
+          </div>
+
+          {/* Feature descriptions helper */}
+          <div className="mb-3 bg-slate-800/60 border border-slate-700 rounded-md p-2">
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              <span className="font-semibold text-slate-300">Feature meanings:</span> linearity = straightness of track ·
+              scatterScore = degree of signal scatter · noiseScore = noise contamination ·
+              rarityScore = unusualness vs baseline · clusterScore = signal clustering density
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {vm.features.map((f) => (
-              <div key={f.key} className="bg-slate-800/60 border border-slate-700 rounded p-2">
-                <p className="text-slate-400 text-[11px] uppercase tracking-wide">{f.label}</p>
-                <p className="text-white font-mono text-sm">{f.value.toFixed(2)}</p>
-              </div>
-            ))}
+            {vm.features.map((f) => {
+              const descriptions: Record<string, string> = {
+                brightness: 'Overall brightness',
+                length: 'Track length',
+                width: 'Track width',
+                linearity: 'Straightness',
+                curvature: 'Curvedness',
+                scatterScore: 'Scatter degree',
+                clusterScore: 'Cluster density',
+                rarityScore: 'Unusualness',
+                noiseScore: 'Noise level',
+              }
+              return (
+                <div key={f.key} className="bg-slate-800/60 border border-slate-700 rounded p-2">
+                  <p className="text-slate-400 text-[11px] uppercase tracking-wide">{f.label}</p>
+                  <p className="text-white font-mono text-sm">{f.value.toFixed(2)}</p>
+                  <p className="text-slate-600 text-[10px] mt-0.5">{descriptions[f.key] ?? f.label}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
 
@@ -222,7 +268,10 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
 
         {/* State vector with contributors (M6) */}
         <div ref={stateRef} className={`bg-slate-800 border border-slate-700 rounded-lg p-3 mt-4 ${highlight('state')}`}>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">State [M6] — Observation State Vector</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-slate-500 text-xs uppercase tracking-wide">State [M6] — Observation State Vector</p>
+            <p className="text-slate-600 text-[10px]">Feature/Node → State relationships</p>
+          </div>
           <div className="space-y-3">
             {vm.stateVectorItems.map((item) => (
               <div key={item.key} className="bg-slate-900/60 border border-slate-700 rounded-md p-3">
@@ -255,6 +304,17 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
                 )}
               </div>
             ))}
+          </div>
+
+          {/* Feature → State hints */}
+          <div className="mt-3 bg-slate-800/60 border border-slate-700 rounded-md p-2">
+            <p className="text-slate-500 text-[10px] font-semibold mb-1">Common feature → state relationships:</p>
+            <ul className="text-slate-500 text-[10px] space-y-0.5">
+              <li>• linearity → confidence, geometryClarity</li>
+              <li>• noiseScore → artifactRisk, caution</li>
+              <li>• rarityScore → raritySignal, claimStrength</li>
+              <li>• clusterScore → particleLikelihood</li>
+            </ul>
           </div>
         </div>
 
