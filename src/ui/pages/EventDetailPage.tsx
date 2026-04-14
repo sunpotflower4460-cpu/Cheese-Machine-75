@@ -218,50 +218,120 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
         {/* MEASURED: extracted features, activated nodes, state vector */}
         {tab === 'measured' && (
           <div className="space-y-4">
-            <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
-              <p className="text-slate-500 text-xs uppercase tracking-wide px-3 pt-2 pb-1">Extracted Features</p>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-700">
-                    <th className="text-left text-slate-400 text-xs uppercase px-3 py-2">Feature</th>
-                    <th className="text-right text-slate-400 text-xs uppercase px-3 py-2">Value</th>
-                    <th className="text-right text-slate-400 text-xs uppercase px-3 py-2">Bar</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(Object.entries(crystal.features) as [string, number][]).map(([k, v]) => (
-                    <tr key={k} className="border-b border-slate-700/50">
-                      <td className="px-3 py-2 text-slate-300 font-mono text-xs">{k}</td>
-                      <td className="px-3 py-2 text-slate-300 text-xs text-right font-mono">{v.toFixed(3)}</td>
-                      <td className="px-3 py-2">
-                        <div className="w-20 h-1.5 bg-slate-700 rounded-full overflow-hidden ml-auto">
-                          <div className="h-full bg-green-500 rounded-full" style={{ width: `${Math.round(v * 100)}%` }} />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {/* Source type hint */}
+            {crystal.sourceType === 'uploaded-image' && (
+              <div className="bg-blue-900/20 border border-blue-700/40 rounded-lg p-3">
+                <p className="text-blue-300 text-xs">
+                  <span className="font-semibold">Uploaded image features</span> — These measurements were extracted from your uploaded image.
+                </p>
+              </div>
+            )}
 
-            {/* Activated nodes */}
-            <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
-              <p className="text-slate-500 text-xs uppercase tracking-wide mb-2 flex items-center gap-1">
-                <Cpu size={11} /> Activated Observation Nodes
-              </p>
-              <div className="space-y-1">
-                {crystal.pipelineResult.activatedNodes.map((n) => (
-                  <div key={n.id} className="flex items-center justify-between">
-                    <span className="text-slate-300 text-xs font-mono">{n.label.replace(/_/g, ' ')}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-600 text-xs">{n.category}</span>
-                      <div className="w-16 h-1 bg-slate-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500" style={{ width: `${Math.round(n.value * 100)}%` }} />
+            {/* Geometry / Shape Features */}
+            <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
+              <div className="px-3 pt-3 pb-2 border-b border-slate-700">
+                <p className="text-slate-400 text-xs uppercase tracking-wide font-semibold">Geometry / Shape Features</p>
+                <p className="text-slate-600 text-xs mt-0.5">Physical dimensions and track characteristics</p>
+              </div>
+              <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { key: 'brightness', label: 'Brightness', desc: 'Overall brightness level', value: crystal.features.brightness },
+                  { key: 'length', label: 'Length', desc: 'Normalized track length', value: crystal.features.length },
+                  { key: 'width', label: 'Width', desc: 'Normalized track width', value: crystal.features.width },
+                  { key: 'linearity', label: 'Linearity', desc: 'How straight the track is', value: crystal.features.linearity },
+                  { key: 'curvature', label: 'Curvature', desc: 'How curved the track is', value: crystal.features.curvature },
+                ].map(({ key, label, desc, value }) => (
+                  <div key={key} className="bg-slate-900/60 border border-slate-700 rounded-md p-3">
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="flex-1">
+                        <p className="text-slate-300 text-xs font-semibold">{label}</p>
+                        <p className="text-slate-600 text-[10px] mt-0.5">{desc}</p>
                       </div>
-                      <span className="text-xs text-slate-400 font-mono w-8 text-right">{(n.value * 100).toFixed(0)}%</span>
+                      <span className="text-slate-200 font-mono text-sm ml-2">{value.toFixed(3)}</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden mt-2">
+                      <div className="h-full bg-green-500 rounded-full" style={{ width: `${Math.round(value * 100)}%` }} />
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Noise / Rarity Features */}
+            <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
+              <div className="px-3 pt-3 pb-2 border-b border-slate-700">
+                <p className="text-slate-400 text-xs uppercase tracking-wide font-semibold">Noise / Rarity Features</p>
+                <p className="text-slate-600 text-xs mt-0.5">Signal quality and uniqueness indicators</p>
+              </div>
+              <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { key: 'scatterScore', label: 'Scatter Score', desc: 'Degree of signal scatter', value: crystal.features.scatterScore },
+                  { key: 'clusterScore', label: 'Cluster Score', desc: 'Density of signal clustering', value: crystal.features.clusterScore },
+                  { key: 'rarityScore', label: 'Rarity Score', desc: 'Unusualness vs baseline', value: crystal.features.rarityScore },
+                  { key: 'noiseScore', label: 'Noise Score', desc: 'Estimated noise level', value: crystal.features.noiseScore },
+                ].map(({ key, label, desc, value }) => (
+                  <div key={key} className="bg-slate-900/60 border border-slate-700 rounded-md p-3">
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="flex-1">
+                        <p className="text-slate-300 text-xs font-semibold">{label}</p>
+                        <p className="text-slate-600 text-[10px] mt-0.5">{desc}</p>
+                      </div>
+                      <span className="text-slate-200 font-mono text-sm ml-2">{value.toFixed(3)}</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden mt-2">
+                      <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.round(value * 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Activated nodes with feature relationships */}
+            <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-slate-500 text-xs uppercase tracking-wide flex items-center gap-1">
+                  <Cpu size={11} /> Activated Observation Nodes
+                </p>
+                <p className="text-slate-600 text-[10px]">Feature → Node relationships</p>
+              </div>
+              <div className="space-y-2">
+                {crystal.pipelineResult.activatedNodes.map((n) => {
+                  // Map features to nodes based on common relationships
+                  const relatedFeatures: string[] = []
+                  if (n.id === 'linear_trace' && crystal.features.linearity > 0.5) relatedFeatures.push('linearity')
+                  if (n.id === 'curved_track' && crystal.features.curvature > 0.4) relatedFeatures.push('curvature')
+                  if (n.id === 'clustered_flash' && crystal.features.clusterScore > 0.4) relatedFeatures.push('clusterScore')
+                  if (n.id === 'scattered_flash' && crystal.features.scatterScore > 0.4) relatedFeatures.push('scatterScore')
+                  if (n.id === 'bright_spot' && crystal.features.brightness > 0.6) relatedFeatures.push('brightness')
+                  if (n.id === 'dim_trace' && crystal.features.brightness < 0.4) relatedFeatures.push('brightness')
+                  if (n.id === 'artifact_candidate' && crystal.features.noiseScore > 0.5) relatedFeatures.push('noiseScore')
+                  if (n.id === 'rare_candidate' && crystal.features.rarityScore > 0.6) relatedFeatures.push('rarityScore')
+
+                  return (
+                    <div key={n.id} className="bg-slate-900/60 border border-slate-700 rounded-md p-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-slate-300 text-xs font-mono">{n.label.replace(/_/g, ' ')}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-600 text-xs">{n.category}</span>
+                          <div className="w-16 h-1 bg-slate-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500" style={{ width: `${Math.round(n.value * 100)}%` }} />
+                          </div>
+                          <span className="text-xs text-slate-400 font-mono w-8 text-right">{(n.value * 100).toFixed(0)}%</span>
+                        </div>
+                      </div>
+                      {relatedFeatures.length > 0 && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="text-slate-600 text-[10px]">driven by:</span>
+                          {relatedFeatures.map((f) => (
+                            <span key={f} className="text-blue-400 text-[10px] bg-blue-900/30 px-1.5 py-0.5 rounded border border-blue-700/30">
+                              {f}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
 

@@ -68,6 +68,14 @@ ObservationStateVector（confidence, artifactRisk, particleLikelihood, caution �
 - M6 の ObservationStateVector では features / nodes / patterns を contributor として薄く可視化し、confidence や artifactRisk が立ち上がった根拠を追いやすくしました。
 - Guide と Home Check も同じ写像の流れで辿れるため、「なぜこの Guide になったか」を Studio 上で確認できます。
 
+## Measured feature visibility
+
+- **Event Detail** の Measured タブでは、抽出された特徴量を「Geometry / Shape」と「Noise / Rarity」の2グループに整理し、各特徴の意味を説明付きで表示します。
+- uploaded image 由来の観測では、「この画像から抽出された特徴」であることを明示するヒントを表示します。
+- **Studio** の Measured セクションでは、特徴量の意味説明を強化し、uploaded image 由来であることを sourceType バッジで示します。
+- feature → node → state のつながりを薄く可視化し、どの特徴がどの node / state に寄与したかを追いやすくしました。
+- sourceType（sample / uploaded-image）を Event Detail と Studio の両方で表示し、観測の由来を分かりやすくしました。
+
 ## What the MVP Can Do
 
 - Load and cycle through sample particle detection events
@@ -101,6 +109,7 @@ Real camera integration (`camera` sourceType) is the next planned step and is no
 ## Future Plans
 
 - Real camera frame capture and image processing
+- Advanced pixel-level image analysis for uploaded images (currently uses lightweight dimension-based features)
 - Cross-device correlation via shared session IDs
 - Monte Carlo simulation overlay comparison
 - Cloud archive with user accounts
