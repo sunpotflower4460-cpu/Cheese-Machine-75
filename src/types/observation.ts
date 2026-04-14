@@ -135,6 +135,11 @@ export type ObservationHomeCheck = {
 /** Overlay hypothesis for simulation display */
 export type OverlayHypothesis = {
   id: string
+  /**
+   * measured:  shape directly derived from observed / extracted data (Measured layer)
+   * predicted: helper line inferred from current measured features
+   * simulated: hypothesis-driven overlay line for comparison (Inferred layer)
+   */
   kind: 'measured' | 'predicted' | 'simulated'
   label: string
   points: Array<{ x: number; y: number }>
