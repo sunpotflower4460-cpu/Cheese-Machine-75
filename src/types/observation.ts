@@ -24,16 +24,19 @@ export type ObservationContext = {
   notes?: string
 }
 
-/** State vector specific to observation – parallel to Node-AI-Z StateVector */
+/**
+ * State vector specific to observation – parallel to Node-AI-Z StateVector.
+ * M6 が Nodes / Bindings / Patterns / Features から組み立てる中間的な解釈状態。
+ */
 export type ObservationStateVector = {
-  confidence: number       // overall confidence in interpretation
-  artifactRisk: number     // risk that this is sensor artifact
-  particleLikelihood: number
-  noiseLevel: number
-  raritySignal: number
-  geometryClarity: number
-  claimStrength: number    // how strongly we claim this is something
-  caution: number          // overall caution flag level
+  confidence: number       // 解釈全体をどれだけ信用できるか
+  artifactRisk: number     // センサー由来アーティファクトである危険度
+  particleLikelihood: number // 粒子イベント仮説の強さ
+  noiseLevel: number       // 測定ノイズの強さ
+  raritySignal: number     // ベースラインからの珍しさ
+  geometryClarity: number  // 形状がどれだけ追いやすいか
+  claimStrength: number    // どれだけ強い言い方が許されるか
+  caution: number          // 解釈時に保持すべき慎重度
 }
 
 /** Input to the observation pipeline */

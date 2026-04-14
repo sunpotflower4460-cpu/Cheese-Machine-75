@@ -11,9 +11,10 @@
 //     → activateObservationNodes()  [Measured → signal/artifact/hypothesis Nodes]
 //     → bindObsNodes()              [Nodes → Bindings]
 //     → liftObsPatterns()           [Nodes + Bindings → Patterns]
-//     → analyzeObsField()           [Nodes + Features → ObservationStateVector]
+//     → buildObservationStateVector() [M6: Nodes / Bindings / Patterns / Features → ObservationStateVector]
 
 import { OBS_BINDING_RULES, OBS_CORE_NODES, OBS_PATTERN_RULES } from './observationNodeData'
+import { buildObservationStateVector } from './observation/buildObservationStateVector'
 import type {
   EventFeatures,
   ObservationBinding,
@@ -191,72 +192,25 @@ function liftObsPatterns(nodes: ObservationNode[], bindings: ObservationBinding[
   return { liftedPatterns: patterns, debugNotes: debug }
 }
 
-/** M4 – Step 4: Nodes + Features → ObservationStateVector。ノード状況を状態ベクトルに集約する。 */
-function analyzeObsField(nodes: ObservationNode[], features: EventFeatures): { stateVector: ObservationStateVector; debugNotes: string[] } {
-  const hasNode = (id: string) => nodes.some((n) => n.id === id)
-
-  const stateVector: ObservationStateVector = {
-    confidence: 0.4,
-    artifactRisk: features.noiseScore * 0.7,
-    particleLikelihood: 0.3,
-    noiseLevel: features.noiseScore,
-    raritySignal: features.rarityScore,
-    geometryClarity: features.linearity * 0.6 + (1 - features.curvature) * 0.4,
-    claimStrength: 0.3,
-    caution: 0.3,
-  }
-
-  if (hasNode('possible_particle_candidate')) {
-    stateVector.particleLikelihood += 0.3
-    stateVector.confidence += 0.2
-    stateVector.claimStrength += 0.25
-  }
-  if (hasNode('likely_sensor_artifact')) {
-    stateVector.artifactRisk += 0.3
-    stateVector.confidence -= 0.15
-    stateVector.caution += 0.3
-  }
-  if (hasNode('linear_trace')) {
-    stateVector.particleLikelihood += 0.2
-    stateVector.confidence += 0.1
-  }
-  if (hasNode('low_noise_context')) {
-    stateVector.confidence += 0.15
-    stateVector.artifactRisk -= 0.2
-  }
-  if (hasNode('unusual_event')) {
-    stateVector.raritySignal += 0.2
-    stateVector.caution += 0.1
-  }
-  if (hasNode('worth_recheck')) {
-    stateVector.caution += 0.2
-  }
-  if (hasNode('archive_worthy')) {
-    stateVector.claimStrength += 0.15
-    stateVector.confidence += 0.1
-  }
-
-  const clamp = (v: number) => Math.max(0, Math.min(1, v))
-  for (const k of Object.keys(stateVector) as Array<keyof ObservationStateVector>) {
-    stateVector[k] = clamp(stateVector[k])
-  }
-
-  return { stateVector, debugNotes: ['Observation field analyzed.'] }
-}
-
 /**
  * M4: Measured (EventFeatures + ObservationContext) → Nodes
  *
- * ObservationInput を受け取り、4段階の変換（ノード発火 → バインディング →
- * パターン引き上げ → 状態ベクトル集約）を経て ObservationPipelineResult を返す。
- * 各ステップの詳細は retrieveObsNodes / bindObsNodes / liftObsPatterns / analyzeObsField を参照。
+ * ObservationInput を受け取り、M4 の 3 段階（ノード発火 → バインディング →
+ * パターン引き上げ）を経て、最後に M6 へ内部委譲して ObservationStateVector を構築する。
+ * 各ステップの詳細は retrieveObsNodes / bindObsNodes / liftObsPatterns /
+ * buildObservationStateVector を参照。
  */
 export function runObservationPipeline(input: ObservationInput): ObservationPipelineResult {
   const start = now()
   const { activatedNodes, suppressedNodes, debugNotes: dn1 } = retrieveObsNodes(input.features)
   const { bindings, debugNotes: dn2 } = bindObsNodes(activatedNodes)
   const { liftedPatterns, debugNotes: dn3 } = liftObsPatterns(activatedNodes, bindings)
-  const { stateVector, debugNotes: dn4 } = analyzeObsField(activatedNodes, input.features)
+  const { stateVector, debugNotes: dn4 } = buildObservationStateVector({
+    nodes: activatedNodes,
+    bindings,
+    patterns: liftedPatterns,
+    features: input.features,
+  })
   const elapsedMs = now() - start
 
   return {

@@ -49,6 +49,16 @@ export const OBSERVATION_MAPPINGS: MappingDescriptor[] = [
     implementedIn: 'src/core/runObservationPipeline.ts',
   },
   {
+    id: 'M6',
+    name: 'NodesToStateVector',
+    inputLabel: 'Nodes / Bindings / Patterns / Features',
+    outputLabel: 'ObservationStateVector',
+    description:
+      '発火したノード群・その関係・持ち上がったパターンと測定特徴量を束ねて、' +
+      ' confidence / artifactRisk / claimStrength などの観測状態ベクトルへ写像する。',
+    implementedIn: 'src/core/observation/buildObservationStateVector.ts',
+  },
+  {
     id: 'M8',
     name: 'StateToCaution',
     inputLabel: 'ObservationStateVector + activated nodes',

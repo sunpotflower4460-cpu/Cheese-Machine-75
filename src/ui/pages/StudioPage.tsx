@@ -105,6 +105,30 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
           </div>
         </div>
 
+        <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 mb-4">
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Current Mapping Flow</p>
+          <div className="flex flex-wrap items-center gap-2 text-[11px]">
+            {vm.mappingFlow.map((step, index) => (
+              <div key={step.label} className="contents">
+                <div
+                  className={`rounded-full border px-2.5 py-1 ${
+                    step.active
+                      ? 'border-blue-500/40 bg-blue-500/10 text-blue-100'
+                      : 'border-slate-700 bg-slate-800 text-slate-500'
+                  }`}
+                >
+                  <span>{step.label}</span>
+                  {step.mappingId && <span className="ml-1 text-[10px] text-slate-400">[{step.mappingId}]</span>}
+                </div>
+                {index < vm.mappingFlow.length - 1 && <span className="text-slate-600">→</span>}
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-slate-500">
+            Raw event cues are measured, lifted into nodes, condensed into state, checked for caution, turned into a guide, and optionally preserved as a crystal.
+          </p>
+        </div>
+
         {/* Internal process log */}
         <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 mb-4 font-mono text-xs">
           <p className="text-slate-500 mb-2 uppercase tracking-wide">Pipeline Process Log</p>
