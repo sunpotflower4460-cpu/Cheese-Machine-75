@@ -51,9 +51,9 @@ M2 → M4 → M8 → M10 → M11 の順に遡ることができる。
 
 
 
-1. **Raw** — extracted event features: brightness, length, width, linearity, curvature, scatter, cluster, rarity, noise
-2. **Measured** — activated observation nodes, bindings, and lifted patterns
-3. **Inferred** — guide bundle: quick guide, deep guide, bridge guide, caution notes
+1. **Raw** — raw images, raw frames, raw logs
+2. **Measured** — extracted features, detected lines, numerical analysis results
+3. **Inferred** — guide bundle, overlay hypotheses, pattern interpretation, caution notes
 4. **Revised** — revision history, recheck flags, memory links to similar crystals
 
 ## What the MVP Can Do
