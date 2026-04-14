@@ -37,9 +37,40 @@ export function extractEventFeatures(raw: Partial<EventFeatures>): EventFeatures
 }
 
 /**
- * M2 (テスト用): ランダムな EventFeatures を生成する。
- * 本番では Raw フレームから extractEventFeatures を呼び出すこと。
+ * M2 (uploaded image): Image → Measured
+ *
+ * アップロード画像から EventFeatures を生成する。
+ * 現時点では画像の幅・高さ・アスペクト比をヒントにした簡易特徴量を返す。
+ * 将来は canvas API などによる実ピクセル解析に置き換える。
+ *
+ * @param imageUri - data URL または object URL
+ * @param width - 画像の表示幅 (px)
+ * @param height - 画像の表示高さ (px)
  */
+export function extractFeaturesFromUploadedImage(
+  _imageUri: string,
+  width: number,
+  height: number,
+): EventFeatures {
+  // Placeholder: derive a lightweight feature set from image dimensions.
+  // Aspect ratio: narrow tall → more "linear" feel; wide short → more "scattered"
+  const aspectRatio = width > 0 && height > 0 ? width / height : 1
+  const linearity = clamp(0.5 + (aspectRatio > 1 ? 0.15 : -0.1))
+  const length = clamp(0.4 + Math.min(Math.max(aspectRatio - 0.5, 0), 1) * 0.3)
+
+  return extractEventFeatures({
+    brightness: 0.5,       // unknown without pixel analysis
+    length,
+    width: clamp(0.2 - (linearity - 0.5) * 0.2),
+    linearity,
+    curvature: 0.2,        // assume moderate without analysis
+    scatterScore: 0.25,
+    clusterScore: 0.2,
+    rarityScore: 0.5,      // treat user-uploaded image as moderately interesting
+    noiseScore: 0.3,
+  })
+}
+
 export function randomEventFeatures(seed?: number): EventFeatures {
   let s = seed ?? Math.random() * 1000
   const r = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff }

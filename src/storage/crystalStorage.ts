@@ -9,7 +9,9 @@ export function loadCrystals(): ObservationCrystal[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
-    return JSON.parse(raw) as ObservationCrystal[]
+    const parsed = JSON.parse(raw) as ObservationCrystal[]
+    // Migrate older crystals that may not have sourceType
+    return parsed.map((c) => (c.sourceType ? c : { ...c, sourceType: 'sample' as const }))
   } catch {
     return []
   }

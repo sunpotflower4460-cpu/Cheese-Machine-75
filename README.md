@@ -71,16 +71,32 @@ ObservationStateVector（confidence, artifactRisk, particleLikelihood, caution �
 ## What the MVP Can Do
 
 - Load and cycle through sample particle detection events
-- Run the full observation pipeline on each event
+- **Upload a local image (jpg/png/webp) as a Raw observation input** — use the "Upload image" tab in Live Observe
+- Run the full observation pipeline on each event (sample or uploaded)
 - Display activated nodes, bindings, and lifted patterns
 - Render a guide bundle (quick/deep/bridge + caution notes)
 - Apply a home/caution check (prevents overclaiming)
-- Save events as **observation crystals** to localStorage
-- View crystal archive with sorting
-- Full event detail view with raw/inferred/revised layers
+- Save events as **observation crystals** to localStorage (sourceType is preserved: `sample` or `uploaded-image`)
+- View crystal archive with sorting; uploaded-image crystals are marked with a badge
+- Full event detail view with raw/inferred/revised layers (Raw tab shows source type)
 - Lab view for comparing two events side by side
 - Studio view showing the full internal pipeline process
 - SVG overlay visualization with measured/predicted/simulated tracks
+
+## Input Sources
+
+Cheese Machine 75 supports two Raw input sources:
+
+| sourceType | Description |
+|---|---|
+| `sample` | Built-in sample particle detection events (SVG placeholders) |
+| `uploaded-image` | User-uploaded image (jpg/png/webp) treated as a Raw observation input |
+
+Uploaded images flow through the same pipeline (M2 → M4 → M6 → M8 → M10 → M11) as sample events.
+Feature extraction for uploaded images is currently a lightweight placeholder (image-dimension-based);
+real pixel analysis will be added in a future PR.
+
+Real camera integration (`camera` sourceType) is the next planned step and is not yet implemented.
 
 ## Future Plans
 

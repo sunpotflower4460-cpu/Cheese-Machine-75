@@ -8,7 +8,7 @@ import { RevisionTimeline } from '../components/RevisionTimeline'
 import { ConfidenceBadge } from '../components/ConfidenceBadge'
 import { buildOverlayHypothesis } from '../../core/simulation/buildOverlayHypothesis'
 import { EventCard } from '../components/EventCard'
-import { Layers, ChevronLeft, Tag, Cpu, AlertTriangle } from 'lucide-react'
+import { Layers, ChevronLeft, Tag, Cpu, AlertTriangle, Upload } from 'lucide-react'
 
 type EventDetailPageProps = {
   crystal: ObservationCrystal | null
@@ -147,7 +147,17 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
         {tab === 'raw' && (
           <div className="space-y-4">
             <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
-              <p className="text-slate-500 text-xs uppercase tracking-wide mb-3">Source Image</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-slate-500 text-xs uppercase tracking-wide">Source Image</p>
+                <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border ${
+                  crystal.sourceType === 'uploaded-image'
+                    ? 'bg-blue-900/40 text-blue-300 border-blue-700/40'
+                    : 'bg-slate-700 text-slate-400 border-slate-600'
+                }`}>
+                  {crystal.sourceType === 'uploaded-image' && <Upload size={9} />}
+                  {crystal.sourceType ?? 'sample'}
+                </span>
+              </div>
               <div className="flex gap-4 items-start">
                 <OverlayCanvas
                   rawImageUri={crystal.rawImageUri}
@@ -157,7 +167,11 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
                   height={140}
                 />
                 <div className="flex-1 text-xs text-slate-400 space-y-1">
-                  <p>Raw sensor capture — no processing applied.</p>
+                  {crystal.sourceType === 'uploaded-image' ? (
+                    <p>User-uploaded image — used as Raw observation input.</p>
+                  ) : (
+                    <p>Raw sensor capture — no processing applied.</p>
+                  )}
                   <p>Use the <span className="text-slate-300">Measured</span> tab to see extracted features.</p>
                   <p>Use the <span className="text-slate-300">Inferred</span> tab to see the guide and patterns.</p>
                 </div>
@@ -169,6 +183,10 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
                 <div className="flex justify-between">
                   <dt className="text-slate-500">Event ID</dt>
                   <dd className="text-slate-300 font-mono">{crystal.pipelineResult.input.eventId}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Source</dt>
+                  <dd className="text-slate-300 font-mono">{crystal.sourceType ?? 'sample'}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-slate-500">Device</dt>
