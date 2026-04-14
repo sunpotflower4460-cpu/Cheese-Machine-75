@@ -1,6 +1,17 @@
 // Simulation overlay hypothesis builder
 // Builds measured / predicted / simulated overlay lines for display
 
+/**
+ * Measured -> Simulated mapping
+ *
+ * This step takes Measured layer event features and converts them into
+ * overlay hypotheses for visual interpretation (Inferred layer).
+ *
+ * measured:  shapes directly derived from observed / extracted data
+ * predicted: helper lines inferred from current measured features
+ * simulated: hypothesis-driven overlay lines for comparison against measurement
+ */
+
 import type { EventFeatures, OverlayHypothesis } from '../../types/observation'
 
 /** Build overlay hypotheses from event features */

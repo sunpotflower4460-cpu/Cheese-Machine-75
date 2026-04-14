@@ -27,6 +27,12 @@ export type ObservationInternalLine = {
   content: string
 }
 
+export type ObservationMappingFlowStep = {
+  label: string
+  mappingId?: string
+  active: boolean
+}
+
 export type ObservationViewModel = {
   summaryCard: ObservationSummaryCard
   guidePreview: GuideBundle
@@ -35,6 +41,7 @@ export type ObservationViewModel = {
   patternCards: ObservationPatternCard[]
   revisionCards: Array<{ id: string; timestamp: string; note: string; trigger: string }>
   internalProcessLines: ObservationInternalLine[]
+  mappingFlow: ObservationMappingFlowStep[]
   overlayHints: string[]
 }
 
@@ -91,9 +98,19 @@ export function buildObservationViewModel(
     { stage: 'Node Retrieval', content: `${result.activatedNodes.length} nodes activated, ${result.suppressedNodes.length} suppressed` },
     { stage: 'Binding', content: `${result.bindings.length} bindings formed` },
     { stage: 'Pattern Lift', content: result.liftedPatterns.length > 0 ? result.liftedPatterns.map((p) => p.label).join(', ') : 'No patterns' },
-    { stage: 'State Vector', content: `confidence=${sv.confidence.toFixed(2)}, artifactRisk=${sv.artifactRisk.toFixed(2)}, particleLikelihood=${sv.particleLikelihood.toFixed(2)}` },
+    { stage: 'M6 State Vector', content: `confidence=${sv.confidence.toFixed(2)}, artifactRisk=${sv.artifactRisk.toFixed(2)}, particleLikelihood=${sv.particleLikelihood.toFixed(2)}` },
     { stage: 'Home Check', content: homeCheck.reasons.join('; ') },
     { stage: 'Guide', content: guide.quickGuide.slice(0, 80) + '...' },
+  ]
+
+  const mappingFlow: ObservationMappingFlowStep[] = [
+    { label: 'Raw', active: true },
+    { label: 'Measured', mappingId: 'M2', active: true },
+    { label: 'Nodes', mappingId: 'M4', active: true },
+    { label: 'State', mappingId: 'M6', active: true },
+    { label: 'Caution', mappingId: 'M8', active: true },
+    { label: 'Guide', mappingId: 'M10', active: true },
+    { label: 'Crystal', mappingId: 'M11', active: crystal !== undefined },
   ]
 
   const overlayHints: string[] = []
@@ -107,5 +124,5 @@ export function buildObservationViewModel(
     overlayHints.push('A simulated curved-track overlay is available.')
   }
 
-  return { summaryCard, guidePreview: guide, cautionSummary, activeSignals, patternCards, revisionCards, internalProcessLines, overlayHints }
+  return { summaryCard, guidePreview: guide, cautionSummary, activeSignals, patternCards, revisionCards, internalProcessLines, mappingFlow, overlayHints }
 }
