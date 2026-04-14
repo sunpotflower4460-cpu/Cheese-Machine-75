@@ -49,13 +49,17 @@ export type StateContributor = {
 
 export type StateContributionMap = Partial<Record<keyof ObservationStateVector, StateContributor[]>>
 
+/** Source type for an observation input — distinguishes where the raw input came from */
+export type ObservationSourceType = 'sample' | 'uploaded-image' | 'camera'
+
 /** Input to the observation pipeline */
 export type ObservationInput = {
   eventId: string
   features: EventFeatures
   context: ObservationContext
-  rawImageUri?: string     // placeholder or base64 for MVP
+  rawImageUri?: string     // placeholder, base64, or object URL
   notes?: string
+  sourceType?: ObservationSourceType  // where did this input come from?
 }
 
 /** Full result from the observation pipeline */
@@ -166,8 +170,9 @@ export type ObservationCrystal = {
   id: string
   createdAt: string
   // ----- Raw 層 -----
-  rawImageUri: string          // placeholder or base64
+  rawImageUri: string          // placeholder, base64, or object URL
   overlayImageUri: string      // placeholder or base64
+  sourceType: ObservationSourceType  // where did the raw input come from?
   // ----- Measured 層 (M2 出力) -----
   features: EventFeatures
   // ----- Inferred 層 (M4 出力 + M10 出力) -----

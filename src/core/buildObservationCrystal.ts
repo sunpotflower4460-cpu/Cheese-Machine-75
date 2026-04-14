@@ -37,6 +37,7 @@ export function buildObservationCrystal(
     createdAt: new Date().toISOString(),
     rawImageUri: pipelineResult.input.rawImageUri ?? '',
     overlayImageUri: '',
+    sourceType: pipelineResult.input.sourceType ?? 'sample',
     features: pipelineResult.input.features,
     pipelineResult,
     guideBundle,

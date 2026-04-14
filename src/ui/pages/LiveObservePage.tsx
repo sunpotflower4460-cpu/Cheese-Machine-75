@@ -1,17 +1,18 @@
 import { useState, useCallback } from 'react'
 import type { Route } from '../../App'
-import type { ObservationCrystal } from '../../types/observation'
+import type { ObservationCrystal, ObservationInput } from '../../types/observation'
 import { NavBar } from '../components/NavBar'
 import { GuidePanel } from '../components/GuidePanel'
 import { OverlayCanvas } from '../components/OverlayCanvas'
 import { ConfidenceBadge } from '../components/ConfidenceBadge'
+import { ImageUploadInput } from '../components/ImageUploadInput'
 import { runObservationPipeline } from '../../core/runObservationPipeline'
 import { buildGuideText } from '../../core/guide/buildGuideText'
 import { buildObservationHomeCheck } from '../../core/observation/buildObservationHomeCheck'
 import { buildObservationCrystal } from '../../core/buildObservationCrystal'
 import { buildOverlayHypothesis } from '../../core/simulation/buildOverlayHypothesis'
-import { detectNextEvent } from '../../core/observation/detectObservationEvent'
-import { ChevronRight, Save, Layers, Eye } from 'lucide-react'
+import { detectNextEvent, buildInputFromUploadedImage } from '../../core/observation/detectObservationEvent'
+import { ChevronRight, Save, Layers, Eye, Upload } from 'lucide-react'
 
 type LiveObservePageProps = {
   crystals: ObservationCrystal[]
@@ -19,12 +20,19 @@ type LiveObservePageProps = {
   navigate: (to: Route) => void
 }
 
+type InputMode = 'sample' | 'upload'
+
 export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageProps) {
+  const [inputMode, setInputMode] = useState<InputMode>('sample')
   const [eventIndex, setEventIndex] = useState(0)
+  const [uploadedInput, setUploadedInput] = useState<ObservationInput | null>(null)
   const [showOverlay, setShowOverlay] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
 
-  const { event } = detectNextEvent(eventIndex)
+  // Resolve active event based on mode
+  const { event: sampleEvent } = detectNextEvent(eventIndex)
+  const event: ObservationInput = inputMode === 'upload' && uploadedInput ? uploadedInput : sampleEvent
+
   const result = runObservationPipeline(event)
   const guide = buildGuideText(result)
   const homeCheck = buildObservationHomeCheck(result)
@@ -42,6 +50,19 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
     setSavedId(crystal.id)
   }, [result, guide, homeCheck, crystals, onSave])
 
+  const handleImageReady = useCallback(
+    (imageUri: string, width: number, height: number, fileName: string) => {
+      setSavedId(null)
+      setUploadedInput(buildInputFromUploadedImage(imageUri, width, height, `Uploaded: ${fileName}`))
+    },
+    [],
+  )
+
+  const handleImageClear = useCallback(() => {
+    setUploadedInput(null)
+    setSavedId(null)
+  }, [])
+
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <NavBar navigate={navigate} current="/observe" />
@@ -52,14 +73,62 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
             <Eye size={18} className="text-green-400" />
             Live Observe
           </h1>
-          <span className="text-slate-500 text-xs font-mono">
-            Event {(eventIndex % 5) + 1} of 5 samples
-          </span>
+          {inputMode === 'sample' && (
+            <span className="text-slate-500 text-xs font-mono">
+              Event {(eventIndex % 5) + 1} of 5 samples
+            </span>
+          )}
+          {inputMode === 'upload' && (
+            <span className="text-slate-500 text-xs font-mono">uploaded-image</span>
+          )}
         </div>
+
+        {/* Input mode toggle */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => { setInputMode('sample'); setSavedId(null) }}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+              inputMode === 'sample'
+                ? 'bg-green-800/60 border-green-600 text-green-200'
+                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+            }`}
+          >
+            <Eye size={12} />
+            Sample events
+          </button>
+          <button
+            onClick={() => { setInputMode('upload'); setSavedId(null) }}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+              inputMode === 'upload'
+                ? 'bg-blue-800/60 border-blue-600 text-blue-200'
+                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+            }`}
+          >
+            <Upload size={12} />
+            Upload image
+          </button>
+        </div>
+
+        {/* Upload area */}
+        {inputMode === 'upload' && (
+          <div className="mb-4">
+            <ImageUploadInput onImageReady={handleImageReady} onClear={handleImageClear} />
+            {!uploadedInput && (
+              <p className="text-slate-600 text-xs mt-2">
+                Select an image to use it as a Raw observation input.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Event ID + context */}
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 mb-4 text-xs text-slate-400 font-mono">
           <span className="text-slate-500">id:</span> {event.eventId} &nbsp;|&nbsp;
+          <span className="text-slate-500">src:</span>{' '}
+          <span className={event.sourceType === 'uploaded-image' ? 'text-blue-400' : 'text-slate-400'}>
+            {event.sourceType ?? 'sample'}
+          </span>
+          &nbsp;|&nbsp;
           <span className="text-slate-500">ts:</span> {event.context.timestamp} &nbsp;|&nbsp;
           <span className="text-slate-500">device:</span> {event.context.deviceId}
           {event.notes && <span className="block mt-1 text-slate-500">{event.notes}</span>}
@@ -144,16 +213,18 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button
-            onClick={handleNext}
-            className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-          >
-            <ChevronRight size={16} />
-            Next Event
-          </button>
+          {inputMode === 'sample' && (
+            <button
+              onClick={handleNext}
+              className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            >
+              <ChevronRight size={16} />
+              Next Event
+            </button>
+          )}
           <button
             onClick={handleSave}
-            disabled={savedId !== null}
+            disabled={savedId !== null || (inputMode === 'upload' && !uploadedInput)}
             className="flex items-center gap-2 bg-green-700 hover:bg-green-600 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
           >
             <Save size={16} />
