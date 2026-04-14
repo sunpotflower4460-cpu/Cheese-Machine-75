@@ -83,7 +83,7 @@ export function ImageUploadInput({ onImageReady, onClear }: ImageUploadInputProp
           onClick={() => inputRef.current?.click()}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click() }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click() } }}
         >
           <Upload size={20} className="text-slate-500 mx-auto mb-2" />
           <p className="text-slate-400 text-sm font-medium">Load image</p>
