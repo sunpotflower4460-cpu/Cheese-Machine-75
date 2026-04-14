@@ -5,10 +5,11 @@
 // このファイルは複数の観測層をひとつの記録単位（Crystal）に結晶化する責務を担う。
 //
 // Crystal が束ねる層:
-//   Raw      ... rawImageUri (元画像の URI)
-//   Measured ... features (EventFeatures), pipelineResult.input
-//   Inferred ... pipelineResult (nodes/bindings/patterns/stateVector), guideBundle
-//   Revised  ... homeCheck, revisionHistory, memoryLinks, recheckFlag
+//   Raw      ... rawImageUri, sourceType (元画像 URI・観測起点)
+//   Measured ... features (EventFeatures) — M2 出力、Raw から直接抽出した特徴量のみ
+//   Inferred ... pipelineResult (nodes/bindings/patterns/stateVector), guideBundle, homeCheck
+//                — M4/M6/M8/M10 出力。測定値から pipeline が推定・構築したもの
+//   Revised  ... revisionHistory, memoryLinks, recheckFlag — 事後改訂・再評価
 
 import type { GuideBundle, ObservationCrystal, ObservationHomeCheck, ObservationPipelineResult } from '../types/observation'
 import { linkSimilarEvents } from './revision/linkSimilarEvents'
@@ -21,9 +22,11 @@ const createId = () =>
 /**
  * M11: Raw + Measured + Inferred → ObservationCrystal
  *
- * pipelineResult (Measured/Inferred)、guideBundle (Inferred)、homeCheck (M8出力)、
+ * pipelineResult (Inferred: nodes/bindings/patterns/stateVector, M4/M6)、
+ * guideBundle (Inferred: M10)、homeCheck (Inferred: M8)、
  * および既存のアーカイブを受け取り、ObservationCrystal を構築する。
  *
+ * Measured 層は features (pipelineResult.input.features) のみ。
  * Crystal は「結晶化された観測記録」であり、保存後も revisionHistory と memoryLinks で改訂できる。
  */
 export function buildObservationCrystal(

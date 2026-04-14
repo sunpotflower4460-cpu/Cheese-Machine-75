@@ -48,6 +48,9 @@ Cheese Machine 75 では、観測データは一度に完成するのではな�
 これにより、「なぜこの Guide が出たか」「Crystal に何が記録されているか」を
 M2 → M4 → M6 → M8 → M10 → M11 の順に遡ることができる。
 
+M2 (EventToMeasured) の出力が Measured 層。
+M4 以降（MeasuredToNodes, NodesToStateVector, StateToCaution, PipelineToGuide）の出力は Inferred 層に属する。
+
 特に M6 では、Nodes / Bindings / Patterns / Features を
 ObservationStateVector（confidence, artifactRisk, particleLikelihood, caution など）へ写像する。
 そのため Guide の根拠は「測定値からノードを立てる」だけでなく、
@@ -56,21 +59,23 @@ ObservationStateVector（confidence, artifactRisk, particleLikelihood, caution �
 写像一覧は `src/core/mappings/mappingCatalog.ts` にも辞書として管理している。
 
 
-
-1. **Raw** — raw sensor capture: source image, raw frame, raw log (no processing applied)
-2. **Measured** — extracted features (brightness, linearity, noise, …), activated observation nodes, bindings, lifted patterns, and state vector derived from the raw image
-3. **Inferred** — guide bundle (quick guide, deep guide, bridge guide), overlay hypotheses, pattern interpretations, and caution-annotated interpretations produced by the pipeline
+1. **Raw** — raw sensor capture: source image, raw frame, raw log, source type (no processing applied)
+2. **Measured** — what is directly measured from the raw input: extracted features (brightness, linearity, noise, geometry, rarity scores)
+3. **Inferred** — what the pipeline concludes or constructs from measured data: activated nodes, bindings, lifted patterns, state vector, home/caution check, guide bundle, overlay hypotheses
 4. **Revised** — revision history, re-evaluation memos, memory links to similar crystals, recheck flags, and post-evaluation updates
 
 ## Studio traceability
 
 - Studio の Current Mapping Flow は M2/M4/M6/M8/M10/M11 の各ステップへジャンプし、対応セクションをハイライトして確認できます。
+- 各セクションにはどの layer に属するか（Raw / Measured / Inferred / Revised）を示す badge を表示しています。
 - M6 の ObservationStateVector では features / nodes / patterns を contributor として薄く可視化し、confidence や artifactRisk が立ち上がった根拠を追いやすくしました。
 - Guide と Home Check も同じ写像の流れで辿れるため、「なぜこの Guide になったか」を Studio 上で確認できます。
+- M4 以降 (nodes / patterns / state vector / caution / guide) は Inferred 層に属します。Measured (M2 出力) は特徴量のみです。
 
 ## Measured feature visibility
 
-- **Event Detail** の Measured タブでは、抽出された特徴量を「Geometry / Shape」と「Noise / Rarity」の2グループに整理し、各特徴の意味を説明付きで表示します。
+- **Event Detail** の Measured タブでは、Raw から直接抽出された特徴量（geometry / noise / rarity）を表示します。
+- Measured タブはあくまで「測定値」のみを扱います。Nodes / Patterns / State Vector は Inferred タブに表示されます。
 - uploaded image 由来の観測では、「この画像から抽出された特徴」であることを明示するヒントを表示します。
 - **Studio** の Measured セクションでは、特徴量の意味説明を強化し、uploaded image 由来であることを sourceType バッジで示します。
 - feature → node → state のつながりを薄く可視化し、どの特徴がどの node / state に寄与したかを追いやすくしました。
