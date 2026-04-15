@@ -6,13 +6,15 @@ import { GuidePanel } from '../components/GuidePanel'
 import { OverlayCanvas } from '../components/OverlayCanvas'
 import { ConfidenceBadge } from '../components/ConfidenceBadge'
 import { ImageUploadInput } from '../components/ImageUploadInput'
+import { CameraCaptureInput } from '../components/CameraCaptureInput'
 import { runObservationPipeline } from '../../core/runObservationPipeline'
 import { buildGuideText } from '../../core/guide/buildGuideText'
 import { buildObservationHomeCheck } from '../../core/observation/buildObservationHomeCheck'
 import { buildObservationCrystal } from '../../core/buildObservationCrystal'
 import { buildOverlayHypothesis } from '../../core/simulation/buildOverlayHypothesis'
-import { detectNextEvent, buildInputFromUploadedImage } from '../../core/observation/detectObservationEvent'
-import { ChevronRight, Save, Layers, Eye, Upload } from 'lucide-react'
+import { detectNextEvent, buildInputFromUploadedImage, buildInputFromCameraFrame } from '../../core/observation/detectObservationEvent'
+import { extractEventFeatures } from '../../core/observation/extractEventFeatures'
+import { ChevronRight, Save, Layers, Eye, Upload, Camera } from 'lucide-react'
 
 type LiveObservePageProps = {
   crystals: ObservationCrystal[]
@@ -20,18 +22,42 @@ type LiveObservePageProps = {
   navigate: (to: Route) => void
 }
 
-type InputMode = 'sample' | 'upload'
+type InputMode = 'sample' | 'upload' | 'camera'
 
 export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageProps) {
   const [inputMode, setInputMode] = useState<InputMode>('sample')
   const [eventIndex, setEventIndex] = useState(0)
   const [uploadedInput, setUploadedInput] = useState<ObservationInput | null>(null)
+  const [cameraInput, setCameraInput] = useState<ObservationInput | null>(null)
   const [showOverlay, setShowOverlay] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
 
   // Resolve active event based on mode
   const { event: sampleEvent } = detectNextEvent(eventIndex)
-  const event: ObservationInput = inputMode === 'upload' && uploadedInput ? uploadedInput : sampleEvent
+  const cameraPlaceholder: ObservationInput | null =
+    inputMode === 'camera' && !cameraInput
+      ? {
+          eventId: 'camera-pending',
+          features: extractEventFeatures({}),
+          context: {
+            deviceId: 'browser-camera',
+            sessionId: 'session-camera-pending',
+            timestamp: new Date().toISOString(),
+            exposureMs: 0,
+            notes: 'Awaiting camera capture',
+          },
+          rawImageUri: '',
+          sourceType: 'camera',
+          notes: 'Waiting for camera capture',
+        }
+      : null
+  const activeCameraEvent = cameraInput ?? cameraPlaceholder
+  const event: ObservationInput =
+    inputMode === 'upload' && uploadedInput
+      ? uploadedInput
+      : inputMode === 'camera'
+        ? activeCameraEvent ?? sampleEvent
+        : sampleEvent
 
   const result = runObservationPipeline(event)
   const guide = buildGuideText(result)
@@ -58,8 +84,18 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
     [],
   )
 
+  const handleCameraReady = useCallback((imageUri: string, width: number, height: number) => {
+    setSavedId(null)
+    setCameraInput(buildInputFromCameraFrame(imageUri, width, height))
+  }, [])
+
   const handleImageClear = useCallback(() => {
     setUploadedInput(null)
+    setSavedId(null)
+  }, [])
+
+  const handleCameraClear = useCallback(() => {
+    setCameraInput(null)
     setSavedId(null)
   }, [])
 
@@ -80,6 +116,9 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
           )}
           {inputMode === 'upload' && (
             <span className="text-slate-500 text-xs font-mono">uploaded-image</span>
+          )}
+          {inputMode === 'camera' && (
+            <span className="text-slate-500 text-xs font-mono">camera (capture current frame)</span>
           )}
         </div>
 
@@ -107,6 +146,17 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
             <Upload size={12} />
             Upload image
           </button>
+          <button
+            onClick={() => { setInputMode('camera'); setSavedId(null) }}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+              inputMode === 'camera'
+                ? 'bg-amber-800/60 border-amber-600 text-amber-100'
+                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+            }`}
+          >
+            <Camera size={12} />
+            Camera
+          </button>
         </div>
 
         {/* Upload area */}
@@ -121,11 +171,36 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
           </div>
         )}
 
+        {/* Camera area */}
+        {inputMode === 'camera' && (
+          <div className="mb-4 space-y-2">
+            <CameraCaptureInput onFrameCaptured={handleCameraReady} onClear={handleCameraClear} />
+            {!cameraInput && (
+              <p className="text-slate-600 text-xs">
+                Open the browser camera and capture the current frame to feed it as a Raw input.
+              </p>
+            )}
+            {cameraInput && (
+              <div className="text-xs text-amber-200 bg-amber-900/30 border border-amber-800/50 rounded-md p-2">
+                Captured frame is loaded as <span className="font-mono">sourceType: camera</span>. Save to archive it.
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Event ID + context */}
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 mb-4 text-xs text-slate-400 font-mono">
           <span className="text-slate-500">id:</span> {event.eventId} &nbsp;|&nbsp;
           <span className="text-slate-500">src:</span>{' '}
-          <span className={event.sourceType === 'uploaded-image' ? 'text-blue-400' : 'text-slate-400'}>
+          <span
+            className={
+              event.sourceType === 'uploaded-image'
+                ? 'text-blue-400'
+                : event.sourceType === 'camera'
+                  ? 'text-amber-300'
+                  : 'text-slate-400'
+            }
+          >
             {event.sourceType ?? 'sample'}
           </span>
           &nbsp;|&nbsp;
@@ -224,7 +299,11 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
           )}
           <button
             onClick={handleSave}
-            disabled={savedId !== null || (inputMode === 'upload' && !uploadedInput)}
+            disabled={
+              savedId !== null ||
+              (inputMode === 'upload' && !uploadedInput) ||
+              (inputMode === 'camera' && !cameraInput)
+            }
             className="flex items-center gap-2 bg-green-700 hover:bg-green-600 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
           >
             <Save size={16} />

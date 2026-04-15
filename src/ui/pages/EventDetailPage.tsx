@@ -8,7 +8,7 @@ import { RevisionTimeline } from '../components/RevisionTimeline'
 import { ConfidenceBadge } from '../components/ConfidenceBadge'
 import { buildOverlayHypothesis } from '../../core/simulation/buildOverlayHypothesis'
 import { EventCard } from '../components/EventCard'
-import { Layers, ChevronLeft, Tag, Cpu, AlertTriangle, Upload } from 'lucide-react'
+import { Layers, ChevronLeft, Tag, Cpu, AlertTriangle, Upload, Camera } from 'lucide-react'
 
 type EventDetailPageProps = {
   crystal: ObservationCrystal | null
@@ -41,6 +41,9 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
   const overlays = buildOverlayHypothesis(crystal.features)
   const sv = crystal.pipelineResult.stateVector
   const similarCrystals = crystal.memoryLinks.map((id) => crystals.find((c) => c.id === id)).filter((c): c is ObservationCrystal => c !== undefined)
+  const sourceLabel = crystal.sourceType ?? 'sample'
+  const isUploaded = sourceLabel === 'uploaded-image'
+  const isCamera = sourceLabel === 'camera'
 
   const TABS: Array<{ id: Tab; label: string; layerNote: string }> = [
     { id: 'raw', label: 'Raw', layerNote: 'Raw sensor capture: source image + capture context (no processing applied)' },
@@ -146,34 +149,39 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
         {/* RAW: source image and capture context */}
         {tab === 'raw' && (
           <div className="space-y-4">
-            <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-slate-500 text-xs uppercase tracking-wide">Source Image</p>
-                <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border ${
-                  crystal.sourceType === 'uploaded-image'
-                    ? 'bg-blue-900/40 text-blue-300 border-blue-700/40'
-                    : 'bg-slate-700 text-slate-400 border-slate-600'
-                }`}>
-                  {crystal.sourceType === 'uploaded-image' && <Upload size={9} />}
-                  {crystal.sourceType ?? 'sample'}
-                </span>
-              </div>
-              <div className="flex gap-4 items-start">
-                <OverlayCanvas
-                  rawImageUri={crystal.rawImageUri}
-                  hypotheses={[]}
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-slate-500 text-xs uppercase tracking-wide">Source Image</p>
+            <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border ${
+              isUploaded
+                ? 'bg-blue-900/40 text-blue-300 border-blue-700/40'
+                : isCamera
+                  ? 'bg-amber-900/40 text-amber-200 border-amber-800/40'
+                  : 'bg-slate-700 text-slate-400 border-slate-600'
+            }`}>
+              {isUploaded && <Upload size={9} />}
+              {isCamera && <Camera size={9} />}
+              {sourceLabel}
+            </span>
+          </div>
+          <div className="flex gap-4 items-start">
+            <OverlayCanvas
+              rawImageUri={crystal.rawImageUri}
+              hypotheses={[]}
                   showOverlay={false}
                   width={140}
-                  height={140}
-                />
-                <div className="flex-1 text-xs text-slate-400 space-y-1">
-                  {crystal.sourceType === 'uploaded-image' ? (
-                    <p>User-uploaded image — used as Raw observation input.</p>
-                  ) : (
-                    <p>Raw sensor capture — no processing applied.</p>
-                  )}
-                  <p>Use the <span className="text-slate-300">Measured</span> tab to see extracted features.</p>
-                  <p>Use the <span className="text-slate-300">Inferred</span> tab to see the guide and patterns.</p>
+              height={140}
+            />
+            <div className="flex-1 text-xs text-slate-400 space-y-1">
+              {isUploaded ? (
+                <p>User-uploaded image — used as Raw observation input.</p>
+              ) : isCamera ? (
+                <p>Captured via browser camera — single frame frozen as Raw observation input.</p>
+              ) : (
+                <p>Raw sensor capture — no processing applied.</p>
+              )}
+              <p>Use the <span className="text-slate-300">Measured</span> tab to see extracted features.</p>
+              <p>Use the <span className="text-slate-300">Inferred</span> tab to see the guide and patterns.</p>
                 </div>
               </div>
             </div>
@@ -186,7 +194,7 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-slate-500">Source</dt>
-                  <dd className="text-slate-300 font-mono">{crystal.sourceType ?? 'sample'}</dd>
+                  <dd className="text-slate-300 font-mono">{sourceLabel}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-slate-500">Device</dt>
@@ -219,11 +227,24 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
         {tab === 'measured' && (
           <div className="space-y-4">
             {/* Source type hint */}
-            {crystal.sourceType === 'uploaded-image' && (
-              <div className="bg-blue-900/20 border border-blue-700/40 rounded-lg p-3">
-                <p className="text-blue-300 text-xs">
-                  <span className="font-semibold">Uploaded image features</span> — These measurements were extracted from your uploaded image.
-                </p>
+            {(isUploaded || isCamera) && (
+              <div
+                className={`rounded-lg p-3 ${
+                  isUploaded
+                    ? 'bg-blue-900/20 border border-blue-700/40'
+                    : 'bg-amber-900/20 border border-amber-800/40'
+                }`}
+              >
+                {isUploaded && (
+                  <p className="text-blue-300 text-xs">
+                    <span className="font-semibold">Uploaded image features</span> — These measurements were extracted from your uploaded image.
+                  </p>
+                )}
+                {isCamera && (
+                  <p className="text-amber-200 text-xs">
+                    <span className="font-semibold">Camera frame features</span> — Measurements derive from the captured browser camera frame.
+                  </p>
+                )}
               </div>
             )}
 

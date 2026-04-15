@@ -1,6 +1,6 @@
 import type { ObservationCrystal } from '../../types/observation'
 import { ConfidenceBadge } from './ConfidenceBadge'
-import { AlertTriangle, Tag, Upload } from 'lucide-react'
+import { AlertTriangle, Camera, Tag, Upload } from 'lucide-react'
 
 type EventCardProps = {
   crystal: ObservationCrystal
@@ -13,6 +13,7 @@ export function EventCard({ crystal, onClick }: EventCardProps) {
   const topPattern = crystal.pipelineResult.liftedPatterns[0]
   const date = new Date(crystal.createdAt).toLocaleString()
   const isUploaded = crystal.sourceType === 'uploaded-image'
+  const isCamera = crystal.sourceType === 'camera'
 
   return (
     <button
@@ -32,6 +33,12 @@ export function EventCard({ crystal, onClick }: EventCardProps) {
               <span className="flex items-center gap-0.5 bg-blue-900/40 text-blue-300 border border-blue-700/40 text-[10px] px-1.5 py-0.5 rounded shrink-0">
                 <Upload size={9} />
                 uploaded
+              </span>
+            )}
+            {isCamera && (
+              <span className="flex items-center gap-0.5 bg-amber-900/40 text-amber-200 border border-amber-800/40 text-[10px] px-1.5 py-0.5 rounded shrink-0">
+                <Camera size={9} />
+                camera
               </span>
             )}
           </div>

@@ -85,6 +85,7 @@ ObservationStateVector（confidence, artifactRisk, particleLikelihood, caution �
 
 - Load and cycle through sample particle detection events
 - **Upload a local image (jpg/png/webp) as a Raw observation input** — use the "Upload image" tab in Live Observe
+- **Capture a single frame from the browser camera and use it as a Raw observation input** — open the "Camera" tab in Live Observe and freeze the current frame
 - Run the full observation pipeline on each event (sample or uploaded)
 - Display activated nodes, bindings, and lifted patterns
 - Render a guide bundle (quick/deep/bridge + caution notes)
@@ -98,22 +99,21 @@ ObservationStateVector（confidence, artifactRisk, particleLikelihood, caution �
 
 ## Input Sources
 
-Cheese Machine 75 supports two Raw input sources:
+Cheese Machine 75 supports three Raw input sources:
 
 | sourceType | Description |
 |---|---|
 | `sample` | Built-in sample particle detection events (SVG placeholders) |
 | `uploaded-image` | User-uploaded image (jpg/png/webp) treated as a Raw observation input |
+| `camera` | Single frame captured from the browser camera and frozen as Raw input |
 
-Uploaded images flow through the same pipeline (M2 → M4 → M6 → M8 → M10 → M11) as sample events.
-Feature extraction for uploaded images is currently a lightweight placeholder (image-dimension-based);
-real pixel analysis will be added in a future PR.
-
-Real camera integration (`camera` sourceType) is the next planned step and is not yet implemented.
+All three sources flow through the same pipeline (M2 → M4 → M6 → M8 → M10 → M11).
+Feature extraction for uploaded and camera frames is currently a lightweight placeholder (image-dimension-based);
+pixel-level analysis and continuous real-time detection are planned follow-ups.
 
 ## Future Plans
 
-- Real camera frame capture and image processing
+- Continuous camera streaming with real-time detection and richer image processing
 - Advanced pixel-level image analysis for uploaded images (currently uses lightweight dimension-based features)
 - Cross-device correlation via shared session IDs
 - Monte Carlo simulation overlay comparison
