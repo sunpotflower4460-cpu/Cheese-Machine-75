@@ -8,7 +8,7 @@ import { runObservationPipeline } from '../../core/runObservationPipeline'
 import { buildGuideText } from '../../core/guide/buildGuideText'
 import { buildObservationHomeCheck } from '../../core/observation/buildObservationHomeCheck'
 import { getSampleEvent } from '../../core/observation/detectObservationEvent'
-import { Atom, ChevronDown, AlertTriangle } from 'lucide-react'
+import { Atom, Camera, ChevronDown, AlertTriangle, Upload } from 'lucide-react'
 
 type StudioPageProps = {
   crystal: ObservationCrystal | null
@@ -50,6 +50,9 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
   const vm = buildObservationViewModel(sampleResult.result, sampleResult.guide, sampleResult.homeCheck, activeCrystal ?? undefined)
 
   const focusedStepInfo = vm.mappingFlow.find((step) => step.id === focusedStep) ?? vm.mappingFlow.find((step) => step.id === 'state') ?? vm.mappingFlow[0]
+  const sourceType = activeCrystal?.sourceType
+  const isUploaded = sourceType === 'uploaded-image'
+  const isCamera = sourceType === 'camera'
 
   const handleFlowSelect = (id: typeof focusedStep) => {
     setFocusedStep(id)
@@ -115,17 +118,24 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
               <p className="text-white font-semibold">{vm.summaryCard.title}</p>
               <p className="text-slate-400 text-sm">{vm.summaryCard.subtitle}</p>
               {/* Source type display */}
-              {activeCrystal?.sourceType && (
+              {sourceType && (
                 <div className="mt-1 flex items-center gap-1.5">
                   <span className={`text-[10px] px-2 py-0.5 rounded border ${
-                    activeCrystal.sourceType === 'uploaded-image'
+                    isUploaded
                       ? 'bg-blue-900/40 text-blue-300 border-blue-700/40'
-                      : 'bg-slate-700 text-slate-400 border-slate-600'
+                      : isCamera
+                        ? 'bg-amber-900/40 text-amber-200 border-amber-800/40'
+                        : 'bg-slate-700 text-slate-400 border-slate-600'
                   }`}>
-                    {activeCrystal.sourceType === 'uploaded-image' ? 'uploaded image' : activeCrystal.sourceType}
+                    {isUploaded && <Upload size={10} className="inline mr-1" />}
+                    {isCamera && <Camera size={10} className="inline mr-1" />}
+                    {isUploaded ? 'uploaded image' : sourceType}
                   </span>
-                  {activeCrystal.sourceType === 'uploaded-image' && (
+                  {isUploaded && (
                     <span className="text-slate-500 text-[10px]">Image-derived observation</span>
+                  )}
+                  {isCamera && (
+                    <span className="text-slate-500 text-[10px]">Captured via camera frame</span>
                   )}
                 </div>
               )}
@@ -195,9 +205,14 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
               <p className="text-slate-500 text-xs uppercase tracking-wide">Measured [M2] — Extracted Features</p>
               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-green-900/30 text-green-400 border-green-700/40">Measured</span>
             </div>
-            {activeCrystal?.sourceType === 'uploaded-image' && (
+            {isUploaded && (
               <span className="text-blue-400 text-[10px] bg-blue-900/30 px-2 py-0.5 rounded border border-blue-700/30">
                 from uploaded image
+              </span>
+            )}
+            {isCamera && (
+              <span className="text-amber-200 text-[10px] bg-amber-900/30 px-2 py-0.5 rounded border border-amber-800/30">
+                from camera frame
               </span>
             )}
           </div>

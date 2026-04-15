@@ -48,3 +48,29 @@ export function buildInputFromUploadedImage(
     notes: notes ?? 'User-uploaded image',
   }
 }
+
+/**
+ * Build an ObservationInput from a captured camera frame.
+ * Mirrors uploaded-image handling so the same pipeline path is reused.
+ */
+export function buildInputFromCameraFrame(
+  imageUri: string,
+  imageWidth: number,
+  imageHeight: number,
+): ObservationInput {
+  const eventId = `camera-${Date.now()}`
+  return {
+    eventId,
+    features: extractFeaturesFromUploadedImage(imageUri, imageWidth, imageHeight),
+    context: {
+      deviceId: 'browser-camera',
+      sessionId: `session-camera-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      exposureMs: 0,
+      notes: 'Captured via browser camera (single frame)',
+    },
+    rawImageUri: imageUri,
+    sourceType: 'camera',
+    notes: 'Captured frame from browser camera',
+  }
+}
