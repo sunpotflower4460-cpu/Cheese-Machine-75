@@ -59,10 +59,12 @@ ObservationStateVector（confidence, artifactRisk, particleLikelihood, caution �
 写像一覧は `src/core/mappings/mappingCatalog.ts` にも辞書として管理している。
 
 
-1. **Raw** — raw sensor capture: source image, raw frame, raw log, sourceType, and other unprocessed input data
+## 4 Layers
+
+1. **Raw** — raw sensor capture: source image, raw frame, raw log, sourceType, and other unprocessed source input
 2. **Measured** — what is directly measured from the raw input: extracted features, detected lines, and numerical analysis results
 3. **Inferred** — what the pipeline concludes or constructs from measured data: activated observation nodes, bindings, lifted patterns, state vector, home/caution result, guide bundle, and overlay hypotheses
-4. **Revised** — revision history, recheck flags, memory links to similar crystals, reevaluation notes, and later updates
+4. **Revised** — revision history, recheck flags, memory links, reevaluation, and later updates
 
 ## Studio traceability
 
@@ -70,12 +72,12 @@ ObservationStateVector（confidence, artifactRisk, particleLikelihood, caution �
 - 各セクションにはどの layer に属するか（Raw / Measured / Inferred / Revised）を示す badge を表示しています。
 - M6 の ObservationStateVector では features / nodes / patterns を contributor として薄く可視化し、confidence や artifactRisk が立ち上がった根拠を追いやすくしました。
 - Guide と Home Check も同じ写像の流れで辿れるため、「なぜこの Guide になったか」を Studio 上で確認できます。
-- M4 以降 (nodes / bindings / patterns / state vector / caution / guide / overlays) は Inferred 層に属します。Measured (M2 出力) は特徴量や検出線などの直接測定結果のみです。
+- M4 以降 (nodes / bindings / patterns / state vector / home/caution result / guide bundle / overlay hypotheses) は Inferred 層に属します。Measured (M2 出力) は特徴量や検出線などの直接測定結果のみです。
 
 ## Measured feature visibility
 
 - **Event Detail** の Measured タブでは、Raw から直接抽出された特徴量や検出線などの測定結果（geometry / noise / rarity など）を表示します。
-- Measured タブはあくまで「測定値」のみを扱います。Nodes / Bindings / Patterns / State Vector / Guide は Inferred 側で扱います。
+- Measured タブはあくまで「測定値」のみを扱います。Nodes / Bindings / Patterns / State Vector / Home Check / Guide / Overlay hypotheses は Inferred 側で扱います。
 - uploaded image 由来の観測では、「この画像から抽出された特徴」であることを明示するヒントを表示します。
 - **Studio** の Measured セクションでは、特徴量の意味説明を強化し、uploaded image 由来であることを sourceType バッジで示します。
 - feature → node → state のつながりを薄く可視化し、どの特徴がどの node / state に寄与したかを追いやすくしました。
