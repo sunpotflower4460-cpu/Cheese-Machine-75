@@ -86,14 +86,17 @@ ObservationStateVector（confidence, artifactRisk, particleLikelihood, caution �
 ## What the MVP Can Do
 
 - Load and cycle through sample particle detection events
-- **Upload a local image (jpg/png/webp) as a Raw observation input** — use the "Upload image" tab in Live Observe
-- **Capture a single frame from the browser camera and use it as a Raw observation input** — open the "Camera" tab in Live Observe and freeze the current frame
-- Run the full observation pipeline on each event (sample or uploaded)
+- **Upload a local image (jpg/png/webp) as a Raw observation input** — use the "Upload" tab in Live Observe
+- **Capture a single frame from the browser camera and use it as a Raw observation input** — open the "Camera" tab in Live Observe and capture the current frame
+  - Camera source has been stabilized for mobile use with improved ready/error state management
+  - Camera-first UI layout optimized for mobile devices
+  - Clear permission handling and error messages for common camera issues
+- Run the full observation pipeline on each event (sample, uploaded, or camera-captured)
 - Display activated nodes, bindings, and lifted patterns
 - Render a guide bundle (quick/deep/bridge + caution notes)
 - Apply a home/caution check (prevents overclaiming)
-- Save events as **observation crystals** to localStorage (sourceType is preserved: `sample` or `uploaded-image`)
-- View crystal archive with sorting; uploaded-image crystals are marked with a badge
+- Save events as **observation crystals** to localStorage (sourceType is preserved: `sample`, `uploaded-image`, or `camera`)
+- View crystal archive with sorting; uploaded-image and camera crystals are marked with badges
 - Full event detail view with raw/measured/inferred/revised layers (Raw tab shows source type)
 - Lab view for comparing two events side by side
 - Studio view showing the full internal pipeline process
@@ -112,6 +115,15 @@ Cheese Machine 75 supports three Raw input sources:
 All three sources flow through the same pipeline (M2 → M4 → M6 → M8 → M10 → M11).
 Feature extraction for uploaded and camera frames is currently a lightweight placeholder (image-dimension-based);
 pixel-level analysis and continuous real-time detection are planned follow-ups.
+
+**Camera capture improvements (latest):**
+- Stricter video ready-state validation: camera only becomes "ready" when video is truly playable with valid dimensions
+- No simultaneous error/ready states: stale errors are cleared when starting, retrying, or successfully capturing
+- Improved error messages: specific handling for permission denied, camera busy, unsupported browsers
+- Mobile-first UI: camera panel is prominent and capture button is large and easy to tap
+- Single-frame capture workflow: optimized for "open → capture → save" flow on mobile devices
+
+Note: Camera capture is currently single-frame based. Continuous streaming analysis and advanced pixel-level detection are future enhancements.
 
 ## Future Plans
 
