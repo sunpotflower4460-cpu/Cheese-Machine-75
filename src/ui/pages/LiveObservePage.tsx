@@ -25,7 +25,7 @@ type LiveObservePageProps = {
 type InputMode = 'sample' | 'upload' | 'camera'
 
 export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageProps) {
-  const [inputMode, setInputMode] = useState<InputMode>('sample')
+  const [inputMode, setInputMode] = useState<InputMode>('camera')
   const [eventIndex, setEventIndex] = useState(0)
   const [uploadedInput, setUploadedInput] = useState<ObservationInput | null>(null)
   const [cameraInput, setCameraInput] = useState<ObservationInput | null>(null)
@@ -103,93 +103,102 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
     <div className="min-h-screen bg-slate-950 text-white">
       <NavBar navigate={navigate} current="/observe" />
 
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-lg font-bold text-white flex items-center gap-2">
-            <Eye size={18} className="text-green-400" />
+      <div className="max-w-2xl mx-auto px-4 py-4 sm:py-6">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h1 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+            <Eye size={20} className="text-green-400" />
             Live Observe
           </h1>
-          {inputMode === 'sample' && (
-            <span className="text-slate-500 text-xs font-mono">
-              Event {(eventIndex % 5) + 1} of 5 samples
-            </span>
-          )}
-          {inputMode === 'upload' && (
-            <span className="text-slate-500 text-xs font-mono">uploaded-image</span>
-          )}
-          {inputMode === 'camera' && (
-            <span className="text-slate-500 text-xs font-mono">camera (capture current frame)</span>
-          )}
-        </div>
-
-        {/* Input mode toggle */}
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => { setInputMode('sample'); setSavedId(null) }}
-            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-              inputMode === 'sample'
-                ? 'bg-green-800/60 border-green-600 text-green-200'
-                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
-            }`}
-          >
-            <Eye size={12} />
-            Sample events
-          </button>
-          <button
-            onClick={() => { setInputMode('upload'); setSavedId(null) }}
-            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-              inputMode === 'upload'
-                ? 'bg-blue-800/60 border-blue-600 text-blue-200'
-                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
-            }`}
-          >
-            <Upload size={12} />
-            Upload image
-          </button>
-          <button
-            onClick={() => { setInputMode('camera'); setSavedId(null) }}
-            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-              inputMode === 'camera'
-                ? 'bg-amber-800/60 border-amber-600 text-amber-100'
-                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
-            }`}
-          >
-            <Camera size={12} />
-            Camera
-          </button>
-        </div>
-
-        {/* Upload area */}
-        {inputMode === 'upload' && (
-          <div className="mb-4">
-            <ImageUploadInput onImageReady={handleImageReady} onClear={handleImageClear} />
-            {!uploadedInput && (
-              <p className="text-slate-600 text-xs mt-2">
-                Select an image to use it as a Raw observation input.
-              </p>
-            )}
+          <div className="text-slate-500 text-xs font-mono">
+            {inputMode === 'sample' && `Event ${(eventIndex % 5) + 1}/5`}
+            {inputMode === 'upload' && 'uploaded-image'}
+            {inputMode === 'camera' && 'camera'}
           </div>
-        )}
+        </div>
 
-        {/* Camera area */}
+        {/* Camera-first mode: show camera panel prominently */}
         {inputMode === 'camera' && (
-          <div className="mb-4 space-y-2">
+          <div className="space-y-4 mb-4">
             <CameraCaptureInput onFrameCaptured={handleCameraReady} onClear={handleCameraClear} />
             {!cameraInput && (
-              <p className="text-slate-600 text-xs">
-                Open the browser camera and capture the current frame to feed it as a Raw input.
+              <p className="text-slate-500 text-xs sm:text-sm text-center">
+                Open the camera and capture a frame to use it as Raw input
               </p>
             )}
             {cameraInput && (
-              <div className="text-xs text-amber-200 bg-amber-900/30 border border-amber-800/50 rounded-md p-2">
-                Captured frame is loaded as <span className="font-mono">sourceType: camera</span>. Save to archive it.
+              <div className="text-xs sm:text-sm text-amber-200 bg-amber-900/30 border border-amber-800/50 rounded-md p-3 text-center">
+                ✓ Frame captured as <span className="font-mono font-medium">sourceType: camera</span>
+                <br className="sm:hidden" />
+                <span className="hidden sm:inline"> — </span>
+                Save to archive as observation crystal
               </div>
             )}
           </div>
         )}
 
+        {/* Upload mode */}
+        {inputMode === 'upload' && (
+          <div className="mb-4 space-y-3">
+            <ImageUploadInput onImageReady={handleImageReady} onClear={handleImageClear} />
+            {!uploadedInput && (
+              <p className="text-slate-500 text-xs sm:text-sm text-center">
+                Select an image to use it as a Raw observation input
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Sample mode */}
+        {inputMode === 'sample' && (
+          <div className="mb-4">
+            <p className="text-slate-500 text-xs sm:text-sm mb-3 text-center">
+              Cycling through built-in sample particle detection events
+            </p>
+          </div>
+        )}
+
+        {/* Input mode selector - now in a more compact, mobile-friendly form */}
+        <div className="mb-4">
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Input Source</p>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => { setInputMode('camera'); setSavedId(null) }}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 text-xs sm:text-sm px-3 py-2.5 sm:py-2 rounded-lg border transition-colors ${
+                inputMode === 'camera'
+                  ? 'bg-amber-800/60 border-amber-600 text-amber-100 shadow-lg shadow-amber-900/30'
+                  : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
+              }`}
+            >
+              <Camera size={16} />
+              <span className="font-medium">Camera</span>
+            </button>
+            <button
+              onClick={() => { setInputMode('upload'); setSavedId(null) }}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 text-xs sm:text-sm px-3 py-2.5 sm:py-2 rounded-lg border transition-colors ${
+                inputMode === 'upload'
+                  ? 'bg-blue-800/60 border-blue-600 text-blue-200'
+                  : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
+              }`}
+            >
+              <Upload size={16} />
+              <span className="font-medium">Upload</span>
+            </button>
+            <button
+              onClick={() => { setInputMode('sample'); setSavedId(null) }}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 text-xs sm:text-sm px-3 py-2.5 sm:py-2 rounded-lg border transition-colors ${
+                inputMode === 'sample'
+                  ? 'bg-green-800/60 border-green-600 text-green-200'
+                  : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
+              }`}
+            >
+              <Eye size={16} />
+              <span className="font-medium">Sample</span>
+            </button>
+          </div>
+        </div>
+
         {/* Event ID + context */}
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 mb-4 text-xs text-slate-400 font-mono">
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 sm:p-3 mb-4 text-xs text-slate-400 font-mono">
           <span className="text-slate-500">id:</span> {event.eventId} &nbsp;|&nbsp;
           <span className="text-slate-500">src:</span>{' '}
           <span
@@ -204,14 +213,13 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
             {event.sourceType ?? 'sample'}
           </span>
           &nbsp;|&nbsp;
-          <span className="text-slate-500">ts:</span> {event.context.timestamp} &nbsp;|&nbsp;
           <span className="text-slate-500">device:</span> {event.context.deviceId}
-          {event.notes && <span className="block mt-1 text-slate-500">{event.notes}</span>}
+          {event.notes && <span className="block mt-1 text-slate-500 text-[11px]">{event.notes}</span>}
         </div>
 
-        {/* Image + overlay */}
-        <div className="flex items-start gap-4 mb-4">
-          <div>
+        {/* Image + overlay + State vector */}
+        <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
+          <div className="w-full sm:w-auto">
             <OverlayCanvas
               rawImageUri={event.rawImageUri}
               hypotheses={overlays}
@@ -226,7 +234,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
               }`}
             >
               <Layers size={12} />
-              {showOverlay ? 'Hide inferred overlay' : 'Show inferred overlay'}
+              {showOverlay ? 'Hide overlay' : 'Show overlay'}
             </button>
             {showOverlay && (
               <p className="mt-1 text-slate-600 text-xs text-center leading-tight">
@@ -236,7 +244,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
           </div>
 
           {/* State vector mini */}
-          <div className="flex-1 space-y-2">
+          <div className="flex-1 w-full space-y-2">
             <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
               <p className="text-slate-500 text-xs mb-2 uppercase tracking-wide">State Vector</p>
               {(
@@ -287,11 +295,11 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           {inputMode === 'sample' && (
             <button
               onClick={handleNext}
-              className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors"
             >
               <ChevronRight size={16} />
               Next Event
@@ -304,7 +312,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
               (inputMode === 'upload' && !uploadedInput) ||
               (inputMode === 'camera' && !cameraInput)
             }
-            className="flex items-center gap-2 bg-green-700 hover:bg-green-600 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 bg-green-700 hover:bg-green-600 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors"
           >
             <Save size={16} />
             {savedId ? 'Saved ✓' : 'Save Crystal'}
