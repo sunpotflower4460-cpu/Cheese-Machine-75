@@ -29,7 +29,13 @@ export function ImageUploadInput({ onImageReady, onClear }: ImageUploadInputProp
         setFileName(file.name)
         onImageReady(dataUrl, img.naturalWidth, img.naturalHeight, file.name)
       }
+      img.onerror = () => {
+        console.error('Failed to load image')
+      }
       img.src = dataUrl
+    }
+    reader.onerror = () => {
+      console.error('Failed to read file')
     }
     reader.readAsDataURL(file)
   }
