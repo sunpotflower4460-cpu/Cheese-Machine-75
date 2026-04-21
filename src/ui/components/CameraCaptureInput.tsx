@@ -26,7 +26,9 @@ export function CameraCaptureInput({ onFrameCaptured, onClear }: CameraCaptureIn
   const [capturedUri, setCapturedUri] = useState<string | null>(null)
 
   const stopStream = useCallback(() => {
-    stream?.getTracks().forEach((t) => t.stop())
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop())
+    }
     if (videoRef.current) {
       videoRef.current.srcObject = null
     }
@@ -34,7 +36,14 @@ export function CameraCaptureInput({ onFrameCaptured, onClear }: CameraCaptureIn
     setError(null) // Clear errors on stop
   }, [stream])
 
-  useEffect(() => stopStream, [stopStream])
+  useEffect(() => {
+    return () => {
+      // Cleanup on unmount: stop any active stream
+      if (stream) {
+        stream.getTracks().forEach((t) => t.stop())
+      }
+    }
+  }, [stream])
 
   const waitForVideoReady = useCallback((video: HTMLVideoElement): Promise<void> => {
     return new Promise((resolve) => {
@@ -60,10 +69,18 @@ export function CameraCaptureInput({ onFrameCaptured, onClear }: CameraCaptureIn
       return
     }
 
+    // Stop any existing stream first
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop())
+      setStream(null)
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
+    }
+
     // Clear stale errors when starting/retrying
     setError(null)
     setStatus('requesting')
-    stopStream()
 
     const constraintsList: MediaStreamConstraints[] = [
       { video: { facingMode: { ideal: 'environment' } } },
@@ -139,7 +156,7 @@ export function CameraCaptureInput({ onFrameCaptured, onClear }: CameraCaptureIn
       setError(`Failed to start camera. ${errorMsg}`)
       setStatus('error')
     }
-  }, [stopStream, waitForVideoReady])
+  }, [stream, waitForVideoReady])
 
   const handleCapture = useCallback(() => {
     const video = videoRef.current
