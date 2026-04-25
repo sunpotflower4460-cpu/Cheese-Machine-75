@@ -5,7 +5,13 @@ import type { ObservationCrystal, ObservationRevisionEntry } from '../types/obse
 
 const STORAGE_KEY = 'cheese_machine_crystals'
 
+const canUseLocalStorage = (): boolean => typeof localStorage !== 'undefined'
+
 export function loadCrystals(): ObservationCrystal[] {
+  if (!canUseLocalStorage()) {
+    return []
+  }
+
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
@@ -18,6 +24,10 @@ export function loadCrystals(): ObservationCrystal[] {
 }
 
 export function saveCrystals(crystals: ObservationCrystal[]): void {
+  if (!canUseLocalStorage()) {
+    return
+  }
+
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(crystals))
   } catch {
@@ -56,5 +66,13 @@ export function deleteCrystal(id: string): ObservationCrystal[] {
 }
 
 export function clearCrystals(): void {
-  localStorage.removeItem(STORAGE_KEY)
+  if (!canUseLocalStorage()) {
+    return
+  }
+
+  try {
+    localStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // Storage unavailable
+  }
 }

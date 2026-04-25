@@ -2,6 +2,7 @@ import type { RevisionState } from './revisionTypes'
 import { createDefaultRevisionState } from './defaultRevisionState'
 
 const STORAGE_KEY = 'node-ai-z:revision-state'
+const canUseLocalStorage = (): boolean => typeof localStorage !== 'undefined'
 
 /**
  * Serialize RevisionState for localStorage
@@ -39,6 +40,10 @@ const deserializeRevisionState = (json: string): RevisionState => {
 }
 
 export const loadRevisionState = (): RevisionState => {
+  if (!canUseLocalStorage()) {
+    return createDefaultRevisionState()
+  }
+
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) {
@@ -52,6 +57,10 @@ export const loadRevisionState = (): RevisionState => {
 }
 
 export const saveRevisionState = (state: RevisionState): void => {
+  if (!canUseLocalStorage()) {
+    return
+  }
+
   try {
     const serialized = serializeRevisionState(state)
     localStorage.setItem(STORAGE_KEY, serialized)
@@ -61,6 +70,10 @@ export const saveRevisionState = (state: RevisionState): void => {
 }
 
 export const clearRevisionState = (): void => {
+  if (!canUseLocalStorage()) {
+    return
+  }
+
   try {
     localStorage.removeItem(STORAGE_KEY)
   } catch (error) {
