@@ -11,7 +11,23 @@ export const applyUserTuning = (
   changeId: string,
   action: UserTuningAction,
 ): RevisionState => {
-  const newState = { ...state }
+  // Deep copy tuning Sets and memory entries to avoid mutating the previous React state
+  const newState: RevisionState = {
+    ...state,
+    tuning: {
+      kept: new Set(state.tuning.kept),
+      softened: new Set(state.tuning.softened),
+      reverted: new Set(state.tuning.reverted),
+      locked: new Set(state.tuning.locked),
+    },
+    memory: {
+      ...state.memory,
+      entries: state.memory.entries.map((entry) => ({
+        ...entry,
+        proposedChanges: entry.proposedChanges.map((c) => ({ ...c })),
+      })),
+    },
+  }
 
   // Update tuning state
   switch (action) {
