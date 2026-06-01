@@ -10,6 +10,7 @@ import { buildOverlayHypothesis } from '../../core/simulation/buildOverlayHypoth
 import { EventCard } from '../components/EventCard'
 import { Layers, ChevronLeft, Tag, Cpu, AlertTriangle, Upload, Camera } from 'lucide-react'
 import { MeasuredSourceBadge } from '../components/MeasuredSourceBadge'
+import { AnalysisProvenanceCard } from '../components/AnalysisProvenanceCard'
 
 type EventDetailPageProps = {
   crystal: ObservationCrystal | null
@@ -238,6 +239,9 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
             <div className="flex items-start gap-2">
               <MeasuredSourceBadge source={crystal.measuredSource} showDescription />
             </div>
+
+            {/* Analysis Provenance card */}
+            <AnalysisProvenanceCard provenance={crystal.analysisProvenance} />
 
             {/* Source type hint */}
             {(isUploaded || isCamera) && (

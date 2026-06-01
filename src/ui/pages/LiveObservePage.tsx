@@ -10,13 +10,14 @@ import { CameraCaptureInput } from '../components/CameraCaptureInput'
 import { runObservationPipeline } from '../../core/runObservationPipeline'
 import { buildGuideText } from '../../core/guide/buildGuideText'
 import { buildObservationHomeCheck } from '../../core/observation/buildObservationHomeCheck'
-import { buildObservationCrystal } from '../../core/buildObservationCrystal'
+import { buildObservationCrystal, previewAnalysisProvenance } from '../../core/buildObservationCrystal'
 import { buildOverlayHypothesis } from '../../core/simulation/buildOverlayHypothesis'
 import { detectNextEvent, buildInputFromUploadedImage, buildInputFromCameraFrame } from '../../core/observation/detectObservationEvent'
 import { extractEventFeatures } from '../../core/observation/extractEventFeatures'
 import { ChevronRight, Save, Layers, Eye, Upload, Camera } from 'lucide-react'
 import { MeasuredSourceBadge } from '../components/MeasuredSourceBadge'
 import { deriveMeasuredSource } from '../../core/observation/measuredSource'
+import { AnalysisProvenanceCard } from '../components/AnalysisProvenanceCard'
 
 type LiveObservePageProps = {
   crystals: ObservationCrystal[]
@@ -67,6 +68,8 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
   const homeCheck = buildObservationHomeCheck(result)
   const overlays = buildOverlayHypothesis(event.features)
   const sv = result.stateVector
+  const currentMeasuredSource = event.measuredSource ?? deriveMeasuredSource(event.sourceType)
+  const provenancePreview = previewAnalysisProvenance(currentMeasuredSource, event.sourceType)
 
   const handleNext = useCallback(() => {
     setSavedId(null)
@@ -300,6 +303,11 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
               </span>
             ))}
           </div>
+        </div>
+
+        {/* Provenance summary — Candidate Review: shows what will be recorded before saving */}
+        <div className="mb-4">
+          <AnalysisProvenanceCard provenance={provenancePreview} />
         </div>
 
         {/* Actions */}
