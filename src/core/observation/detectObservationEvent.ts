@@ -45,6 +45,7 @@ export function buildInputFromUploadedImage(
     },
     rawImageUri: imageUri,
     sourceType: 'uploaded-image',
+    measuredSource: 'placeholder-dimension',
     notes: notes ?? 'User-uploaded image',
   }
 }
@@ -71,6 +72,7 @@ export function buildInputFromCameraFrame(
     },
     rawImageUri: imageUri,
     sourceType: 'camera',
+    measuredSource: 'placeholder-dimension',
     notes: 'Captured frame from browser camera',
   }
 }

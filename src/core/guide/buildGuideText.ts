@@ -10,6 +10,7 @@
 // Guide の材料 (GuideInput) を明示することで、どこから何が来ているかを追いやすくする。
 
 import type { GuideBundle, ObservationHomeCheck, ObservationPipelineResult } from '../../types/observation'
+import { shouldCapClaimStrength, getMeasuredSourceLabel } from '../observation/measuredSource'
 
 /**
  * M10 の入力材料をまとめた内部型。
@@ -111,6 +112,13 @@ export function buildGuideText(result: ObservationPipelineResult, homeCheck?: Ob
 
   // Caution notes
   const cautionNotes: string[] = []
+
+  // If the measurement source is not real pixel data, always add a top caution note.
+  const measuredSource = result.input.measuredSource
+  if (measuredSource && shouldCapClaimStrength(measuredSource)) {
+    cautionNotes.push(`Measurement source: "${getMeasuredSourceLabel(measuredSource)}" — these values were NOT derived from real pixel analysis. Do not treat them as genuine sensor measurements.`)
+  }
+
   if (stateVector.artifactRisk > 0.5) {
     cautionNotes.push(`Artifact risk is elevated (${(stateVector.artifactRisk * 100).toFixed(0)}%). Do not claim particle detection without independent confirmation.`)
   }

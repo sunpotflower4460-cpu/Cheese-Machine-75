@@ -53,6 +53,25 @@ export type StateContributionMap = Partial<Record<keyof ObservationStateVector, 
 /** Source type for an observation input — Raw layer: distinguishes where the raw input came from */
 export type ObservationSourceType = 'sample' | 'uploaded-image' | 'camera'
 
+/**
+ * Measurement provenance — describes HOW the Measured layer values were produced.
+ * This is the trust boundary: the app must never imply placeholder values are real pixel measurements.
+ *
+ * - `sample-authored`       : values authored by a human for demo/testing purposes
+ * - `placeholder-dimension` : values derived from image dimensions/metadata, NOT from pixel analysis
+ * - `pixel-derived`         : values extracted from actual pixel analysis (real measurements)
+ * - `calibrated-pixel`      : pixel-derived values that have been calibrated against a reference
+ * - `temporal-difference`   : values computed from a temporal diff of multiple frames
+ * - `external-agent`        : values supplied by an external system or agent
+ */
+export type MeasuredSource =
+  | 'sample-authored'
+  | 'placeholder-dimension'
+  | 'pixel-derived'
+  | 'calibrated-pixel'
+  | 'temporal-difference'
+  | 'external-agent'
+
 /** Input to the observation pipeline — bundles Raw and the Measured features derived from it */
 export type ObservationInput = {
   eventId: string
@@ -61,6 +80,7 @@ export type ObservationInput = {
   rawImageUri?: string     // placeholder, base64, or object URL
   notes?: string
   sourceType?: ObservationSourceType  // where did this input come from?
+  measuredSource?: MeasuredSource     // how were the Measured features produced?
 }
 
 /** Full result from the observation pipeline — Inferred layer (M4 → M6 outputs) */
@@ -185,6 +205,7 @@ export type ObservationCrystal = {
   // ----- Measured 層 (M2 出力) -----
   // Directly measured from raw input: numerical feature extraction only
   features: EventFeatures
+  measuredSource: MeasuredSource      // how were the features produced? (measurement provenance)
   // ----- Inferred 層 (M4–M10 出力) -----
   // What the pipeline constructs from measured data:
   // nodes, bindings, patterns, stateVector (M4/M6), homeCheck (M8), guideBundle (M10)

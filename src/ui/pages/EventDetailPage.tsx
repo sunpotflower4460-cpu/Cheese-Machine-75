@@ -9,6 +9,7 @@ import { ConfidenceBadge } from '../components/ConfidenceBadge'
 import { buildOverlayHypothesis } from '../../core/simulation/buildOverlayHypothesis'
 import { EventCard } from '../components/EventCard'
 import { Layers, ChevronLeft, Tag, Cpu, AlertTriangle, Upload, Camera } from 'lucide-react'
+import { MeasuredSourceBadge } from '../components/MeasuredSourceBadge'
 
 type EventDetailPageProps = {
   crystal: ObservationCrystal | null
@@ -110,6 +111,13 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
             </button>
           </div>
           <div className="flex-1 space-y-2">
+            {/* Measured source badge — always visible so users can immediately see provenance */}
+            <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 text-xs">
+              <div className="flex justify-between mb-1">
+                <span className="text-slate-500 uppercase tracking-wide">M2 Source</span>
+              </div>
+              <MeasuredSourceBadge source={crystal.measuredSource} showDescription />
+            </div>
             {/* Recheck status badge */}
             <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 text-xs">
               <div className="flex justify-between mb-1">
@@ -226,6 +234,11 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
         {/* MEASURED: extracted features only (M2 output — what is directly measured from raw input) */}
         {tab === 'measured' && (
           <div className="space-y-4">
+            {/* Measured source badge — always shown so the user knows the measurement provenance */}
+            <div className="flex items-start gap-2">
+              <MeasuredSourceBadge source={crystal.measuredSource} showDescription />
+            </div>
+
             {/* Source type hint */}
             {(isUploaded || isCamera) && (
               <div

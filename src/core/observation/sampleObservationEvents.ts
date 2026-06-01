@@ -26,6 +26,7 @@ export const SAMPLE_OBSERVATION_EVENTS: ObservationInput[] = [
     context: { ...SAMPLE_CONTEXT, timestamp: '2026-04-13T00:00:01Z', notes: 'Clear straight track, low noise environment' },
     rawImageUri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzExMSIvPjxsaW5lIHgxPSIxMCIgeTE9IjUwIiB4Mj0iOTAiIHkyPSI0OCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+',
     sourceType: 'sample',
+    measuredSource: 'sample-authored',
     notes: 'Sample [linear_candidate]: linear particle track candidate',
   },
   {
@@ -35,6 +36,7 @@ export const SAMPLE_OBSERVATION_EVENTS: ObservationInput[] = [
     context: { ...SAMPLE_CONTEXT, timestamp: '2026-04-13T00:01:15Z', notes: 'Isolated bright spot, high noise' },
     rawImageUri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzExMSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjMiIGZpbGw9IndoaXRlIi8+PC9zdmc+',
     sourceType: 'sample',
+    measuredSource: 'sample-authored',
     notes: 'Sample [artifact_like]: hot pixel cluster suspect',
   },
   {
@@ -44,6 +46,7 @@ export const SAMPLE_OBSERVATION_EVENTS: ObservationInput[] = [
     context: { ...SAMPLE_CONTEXT, timestamp: '2026-04-13T00:02:40Z', notes: 'Curved track with moderate scatter' },
     rawImageUri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzExMSIvPjxwYXRoIGQ9Ik0xMCA3MCBRNTAgMjAgOTAgNjAiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==',
     sourceType: 'sample',
+    measuredSource: 'sample-authored',
     notes: 'Sample [scattered_candidate]: curved track – possibly magnetic field effect',
   },
   {
@@ -53,6 +56,7 @@ export const SAMPLE_OBSERVATION_EVENTS: ObservationInput[] = [
     context: { ...SAMPLE_CONTEXT, timestamp: '2026-04-13T00:04:10Z', notes: 'Ambiguous event, moderate scatter' },
     rawImageUri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzExMSIvPjxsaW5lIHgxPSIyMCIgeTE9IjYwIiB4Mj0iNzAiIHkyPSI0NSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuNikiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==',
     sourceType: 'sample',
+    measuredSource: 'sample-authored',
     notes: 'Sample [uncertain_event]: worth a second look',
   },
   {
@@ -62,6 +66,7 @@ export const SAMPLE_OBSERVATION_EVENTS: ObservationInput[] = [
     context: { ...SAMPLE_CONTEXT, timestamp: '2026-04-13T00:06:30Z', notes: 'Very clean long straight track' },
     rawImageUri: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzExMSIvPjxsaW5lIHgxPSI4IiB5MT0iNTUiIHgyPSI5MiIgeTI9IjQ1IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIuNSIvPjwvc3ZnPg==',
     sourceType: 'sample',
+    measuredSource: 'sample-authored',
     notes: 'Sample [strong_candidate]: strong particle track candidate – archive worthy',
   },
 ]
