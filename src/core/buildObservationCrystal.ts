@@ -11,14 +11,126 @@
 //                — M4/M6/M8/M10 出力。測定値から pipeline が推定・構築したもの
 //   Revised  ... revisionHistory, memoryLinks, recheckFlag — 事後改訂・再評価
 
-import type { GuideBundle, ObservationCrystal, ObservationHomeCheck, ObservationPipelineResult } from '../types/observation'
+import type {
+  AnalysisProvenance,
+  DetectionAlgorithmId,
+  GuideBundle,
+  MeasuredSource,
+  ObservationCrystal,
+  ObservationHomeCheck,
+  ObservationPipelineResult,
+  ObservationSourceType,
+} from '../types/observation'
 import { deriveMeasuredSource } from './observation/measuredSource'
 import { linkSimilarEvents } from './revision/linkSimilarEvents'
+
+/** Current analysis pipeline version — bump when the algorithm changes. */
+const ANALYSIS_VERSION = '0.1.0'
 
 const createId = () =>
   typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
     ? `crystal_${crypto.randomUUID()}`
     : `crystal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+
+// ---------------------------------------------------------------------------
+// Provenance helpers
+// ---------------------------------------------------------------------------
+
+function deriveAlgorithmId(source: MeasuredSource): DetectionAlgorithmId {
+  switch (source) {
+    case 'sample-authored':       return 'authored-v1'
+    case 'placeholder-dimension': return 'placeholder-v1'
+    case 'pixel-derived':         return 'pixel-edge-v1'
+    case 'calibrated-pixel':      return 'pixel-edge-v1'
+    case 'temporal-difference':   return 'temporal-diff-v1'
+    case 'external-agent':        return 'external-agent-v1'
+  }
+}
+
+function deriveRawInputKind(
+  sourceType: ObservationSourceType | undefined,
+): AnalysisProvenance['rawInputKind'] {
+  switch (sourceType) {
+    case 'uploaded-image': return 'uploaded-image'
+    case 'camera':         return 'camera-frame'
+    case 'sample':         return 'sample'
+    default:               return 'sample'
+  }
+}
+
+function deriveLimitations(source: MeasuredSource): string[] {
+  switch (source) {
+    case 'sample-authored':
+      return [
+        'Values authored for demo or testing purposes — not real sensor data.',
+      ]
+    case 'placeholder-dimension':
+      return [
+        'Single-frame analysis only.',
+        'No dark calibration was applied.',
+        'Measurement is dimension-derived placeholder.',
+        'Morphology is a visual classification, not proof of origin.',
+      ]
+    case 'pixel-derived':
+    case 'calibrated-pixel':
+      return [
+        'Single-frame analysis only.',
+        'Morphology is a visual classification, not proof of origin.',
+      ]
+    case 'temporal-difference':
+      return [
+        'Temporal analysis requires stable session context.',
+        'Morphology is a visual classification, not proof of origin.',
+      ]
+    case 'external-agent':
+      return [
+        'Values supplied by an external agent — verify independently.',
+      ]
+  }
+}
+
+function deriveWarnings(source: MeasuredSource): string[] {
+  switch (source) {
+    case 'placeholder-dimension':
+      return ['No dark calibration applied.']
+    case 'pixel-derived':
+      return ['No dark calibration applied.']
+    case 'sample-authored':
+    case 'calibrated-pixel':
+    case 'temporal-difference':
+    case 'external-agent':
+      return []
+  }
+}
+
+function buildAnalysisProvenance(
+  source: MeasuredSource,
+  sourceType: ObservationSourceType | undefined,
+  createdAt: string,
+): AnalysisProvenance {
+  return {
+    measuredSource: source,
+    algorithmId: deriveAlgorithmId(source),
+    analysisVersion: ANALYSIS_VERSION,
+    createdAt,
+    rawInputKind: deriveRawInputKind(sourceType),
+    calibrationStatus: source === 'calibrated-pixel' ? 'applied' : 'none',
+    limitations: deriveLimitations(source),
+    warnings: deriveWarnings(source),
+  }
+}
+
+/** Build a provenance preview (without a fixed timestamp) for display before saving. */
+export function previewAnalysisProvenance(
+  source: MeasuredSource,
+  sourceType: ObservationSourceType | undefined,
+): AnalysisProvenance {
+  return buildAnalysisProvenance(source, sourceType, new Date().toISOString())
+}
+
+// ---------------------------------------------------------------------------
+// Crystal builder
+// ---------------------------------------------------------------------------
 
 /**
  * M11: Raw + Measured + Inferred → ObservationCrystal
@@ -36,14 +148,20 @@ export function buildObservationCrystal(
   homeCheck: ObservationHomeCheck,
   archive: ObservationCrystal[] = [],
 ): ObservationCrystal {
+  const createdAt = new Date().toISOString()
+  const sourceType = pipelineResult.input.sourceType
+  const measuredSource =
+    pipelineResult.input.measuredSource ?? deriveMeasuredSource(sourceType)
+
   const crystal: ObservationCrystal = {
     id: createId(),
-    createdAt: new Date().toISOString(),
+    createdAt,
     rawImageUri: pipelineResult.input.rawImageUri ?? '',
     overlayImageUri: '',
-    sourceType: pipelineResult.input.sourceType ?? 'sample',
+    sourceType: sourceType ?? 'sample',
     features: pipelineResult.input.features,
-    measuredSource: pipelineResult.input.measuredSource ?? deriveMeasuredSource(pipelineResult.input.sourceType),
+    measuredSource,
+    analysisProvenance: buildAnalysisProvenance(measuredSource, sourceType, createdAt),
     pipelineResult,
     guideBundle,
     homeCheck,

@@ -72,6 +72,51 @@ export type MeasuredSource =
   | 'temporal-difference'
   | 'external-agent'
 
+/**
+ * Detection algorithm identifier — which algorithm produced the Measured values.
+ * - `authored-v1`         : human-authored sample values (no algorithm)
+ * - `placeholder-v1`      : dimension-derived placeholder (Phase 0)
+ * - `pixel-edge-v1`       : future: pixel edge-detection algorithm
+ * - `pixel-ml-v1`         : future: machine-learning pixel classifier
+ * - `temporal-diff-v1`    : future: temporal-difference frame algorithm
+ * - `external-agent-v1`   : future: external agent / API-supplied values
+ */
+export type DetectionAlgorithmId =
+  | 'authored-v1'
+  | 'placeholder-v1'
+  | 'pixel-edge-v1'
+  | 'pixel-ml-v1'
+  | 'temporal-diff-v1'
+  | 'external-agent-v1'
+
+/**
+ * Analysis Provenance — records exactly how each measured result was produced.
+ * Attached to every ObservationCrystal so Studio and Event Detail can answer:
+ * "Where did this value come from?"
+ *
+ * Measured 層  (Measured layer) の出所を記録する監査レコード。
+ */
+export type AnalysisProvenance = {
+  /** Which measurement method produced the values (mirrors crystal.measuredSource) */
+  measuredSource: MeasuredSource
+  /** Which algorithm was used to extract features */
+  algorithmId: DetectionAlgorithmId
+  /** Semantic version of the analysis pipeline at time of creation */
+  analysisVersion: string
+  /** ISO-8601 timestamp when the analysis was performed */
+  createdAt: string
+  /** Category of raw input that was analysed */
+  rawInputKind: 'sample' | 'uploaded-image' | 'camera-frame' | 'camera-session' | 'external-json'
+  /** Reference to the calibration dataset used (if any) */
+  calibrationId?: string
+  /** Status of calibration at time of analysis */
+  calibrationStatus: 'none' | 'available' | 'stale' | 'applied'
+  /** Known limitations of this analysis method */
+  limitations: string[]
+  /** Active warnings that applied at analysis time */
+  warnings: string[]
+}
+
 /** Input to the observation pipeline — bundles Raw and the Measured features derived from it */
 export type ObservationInput = {
   eventId: string
@@ -206,6 +251,7 @@ export type ObservationCrystal = {
   // Directly measured from raw input: numerical feature extraction only
   features: EventFeatures
   measuredSource: MeasuredSource      // how were the features produced? (measurement provenance)
+  analysisProvenance: AnalysisProvenance  // full audit record: algorithm, version, limitations, warnings
   // ----- Inferred 層 (M4–M10 出力) -----
   // What the pipeline constructs from measured data:
   // nodes, bindings, patterns, stateVector (M4/M6), homeCheck (M8), guideBundle (M10)

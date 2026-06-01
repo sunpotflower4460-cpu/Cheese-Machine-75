@@ -10,6 +10,7 @@ import { buildObservationHomeCheck } from '../../core/observation/buildObservati
 import { getSampleEvent } from '../../core/observation/detectObservationEvent'
 import { Atom, Camera, ChevronDown, AlertTriangle, Upload } from 'lucide-react'
 import { MeasuredSourceBadge } from '../components/MeasuredSourceBadge'
+import { AnalysisProvenanceCard } from '../components/AnalysisProvenanceCard'
 
 type StudioPageProps = {
   crystal: ObservationCrystal | null
@@ -222,6 +223,13 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
           {activeCrystal && (
             <div className="mb-3">
               <MeasuredSourceBadge source={activeCrystal.measuredSource} showDescription />
+            </div>
+          )}
+
+          {/* Analysis Provenance — compact card with expandable details */}
+          {activeCrystal && (
+            <div className="mb-3">
+              <AnalysisProvenanceCard provenance={activeCrystal.analysisProvenance} />
             </div>
           )}
 

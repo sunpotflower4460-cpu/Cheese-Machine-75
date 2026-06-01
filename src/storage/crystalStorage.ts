@@ -1,11 +1,28 @@
 // Observation Crystal storage – localStorage-based for MVP
 // One event = one ObservationCrystal
 
-import type { ObservationCrystal, ObservationRevisionEntry } from '../types/observation'
+import type { AnalysisProvenance, ObservationCrystal, ObservationRevisionEntry } from '../types/observation'
 
 const STORAGE_KEY = 'cheese_machine_crystals'
 
 const canUseLocalStorage = (): boolean => typeof localStorage !== 'undefined'
+
+/** Minimal provenance stub for crystals saved before AnalysisProvenance was introduced. */
+function migrateProvenance(c: ObservationCrystal): ObservationCrystal {
+  if (c.analysisProvenance) return c
+  const source = c.measuredSource ?? 'sample-authored'
+  const provenance: AnalysisProvenance = {
+    measuredSource: source,
+    algorithmId: source === 'placeholder-dimension' ? 'placeholder-v1' : 'authored-v1',
+    analysisVersion: '0.0.0',
+    createdAt: c.createdAt,
+    rawInputKind: c.sourceType === 'uploaded-image' ? 'uploaded-image' : c.sourceType === 'camera' ? 'camera-frame' : 'sample',
+    calibrationStatus: 'none',
+    limitations: ['Provenance record unavailable — this crystal was saved before provenance tracking was added.'],
+    warnings: [],
+  }
+  return { ...c, analysisProvenance: provenance }
+}
 
 export function loadCrystals(): ObservationCrystal[] {
   if (!canUseLocalStorage()) {
@@ -16,8 +33,10 @@ export function loadCrystals(): ObservationCrystal[] {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw) as ObservationCrystal[]
-    // Migrate older crystals that may not have sourceType
-    return parsed.map((c) => (c.sourceType ? c : { ...c, sourceType: 'sample' as const }))
+    // Migrate older crystals that may not have sourceType or analysisProvenance
+    return parsed
+      .map((c) => (c.sourceType ? c : { ...c, sourceType: 'sample' as const }))
+      .map(migrateProvenance)
   } catch {
     return []
   }
