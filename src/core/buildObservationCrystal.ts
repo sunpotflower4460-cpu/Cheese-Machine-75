@@ -12,6 +12,7 @@
 //   Revised  ... revisionHistory, memoryLinks, recheckFlag — 事後改訂・再評価
 
 import type { GuideBundle, ObservationCrystal, ObservationHomeCheck, ObservationPipelineResult } from '../types/observation'
+import { deriveMeasuredSource } from './observation/measuredSource'
 import { linkSimilarEvents } from './revision/linkSimilarEvents'
 
 const createId = () =>
@@ -42,6 +43,7 @@ export function buildObservationCrystal(
     overlayImageUri: '',
     sourceType: pipelineResult.input.sourceType ?? 'sample',
     features: pipelineResult.input.features,
+    measuredSource: pipelineResult.input.measuredSource ?? deriveMeasuredSource(pipelineResult.input.sourceType),
     pipelineResult,
     guideBundle,
     homeCheck,

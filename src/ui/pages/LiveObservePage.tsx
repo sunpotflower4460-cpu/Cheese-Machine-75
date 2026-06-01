@@ -15,6 +15,8 @@ import { buildOverlayHypothesis } from '../../core/simulation/buildOverlayHypoth
 import { detectNextEvent, buildInputFromUploadedImage, buildInputFromCameraFrame } from '../../core/observation/detectObservationEvent'
 import { extractEventFeatures } from '../../core/observation/extractEventFeatures'
 import { ChevronRight, Save, Layers, Eye, Upload, Camera } from 'lucide-react'
+import { MeasuredSourceBadge } from '../components/MeasuredSourceBadge'
+import { deriveMeasuredSource } from '../../core/observation/measuredSource'
 
 type LiveObservePageProps = {
   crystals: ObservationCrystal[]
@@ -48,6 +50,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
           },
           rawImageUri: '',
           sourceType: 'camera',
+          measuredSource: 'placeholder-dimension',
           notes: 'Waiting for camera capture',
         }
       : null
@@ -198,7 +201,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
         </div>
 
         {/* Event ID + context */}
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 sm:p-3 mb-4 text-xs text-slate-400 font-mono">
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 sm:p-3 mb-2 text-xs text-slate-400 font-mono">
           <span className="text-slate-500">id:</span> {event.eventId} &nbsp;|&nbsp;
           <span className="text-slate-500">src:</span>{' '}
           <span
@@ -215,6 +218,11 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
           &nbsp;|&nbsp;
           <span className="text-slate-500">device:</span> {event.context.deviceId}
           {event.notes && <span className="block mt-1 text-slate-500 text-[11px]">{event.notes}</span>}
+        </div>
+
+        {/* Measured source badge — always show so the user never assumes placeholder = real pixels */}
+        <div className="mb-4">
+          <MeasuredSourceBadge source={event.measuredSource ?? deriveMeasuredSource(event.sourceType)} showDescription />
         </div>
 
         {/* Image + overlay + State vector */}

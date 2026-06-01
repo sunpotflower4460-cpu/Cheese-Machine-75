@@ -9,6 +9,7 @@ import { buildGuideText } from '../../core/guide/buildGuideText'
 import { buildObservationHomeCheck } from '../../core/observation/buildObservationHomeCheck'
 import { getSampleEvent } from '../../core/observation/detectObservationEvent'
 import { Atom, Camera, ChevronDown, AlertTriangle, Upload } from 'lucide-react'
+import { MeasuredSourceBadge } from '../components/MeasuredSourceBadge'
 
 type StudioPageProps = {
   crystal: ObservationCrystal | null
@@ -216,6 +217,13 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
               </span>
             )}
           </div>
+
+          {/* Measured source badge — always show so the user knows the provenance of these values */}
+          {activeCrystal && (
+            <div className="mb-3">
+              <MeasuredSourceBadge source={activeCrystal.measuredSource} showDescription />
+            </div>
+          )}
 
           {/* Feature descriptions helper */}
           <div className="mb-3 bg-slate-800/60 border border-slate-700 rounded-md p-2">

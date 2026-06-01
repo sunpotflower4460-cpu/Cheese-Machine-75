@@ -16,6 +16,7 @@
 // ※ Node-AI-Z の「内面的帰還」の概念を、観測上の主張抑制・慎重化として再解釈している。
 
 import type { ObservationHomeCheck, ObservationPipelineResult } from '../../types/observation'
+import { shouldCapClaimStrength, getMeasuredSourceLabel } from './measuredSource'
 
 /**
  * M8: State + Patterns → Home/Caution
@@ -33,6 +34,16 @@ export function buildObservationHomeCheck(result: ObservationPipelineResult): Ob
   let softenClaim = false
   let holdAsInteresting = false
   let keepAsStrongCandidate = false
+
+  // If the measured source is placeholder or authored, cap claim strength unconditionally.
+  // The current pipeline has no real pixel analyzer; all uploaded-image and camera values
+  // are dimension-derived placeholders that must not be presented as sensor measurements.
+  const measuredSource = result.input.measuredSource
+  if (measuredSource && shouldCapClaimStrength(measuredSource)) {
+    cautionUp = true
+    softenClaim = true
+    reasons.push(`Measurement source is "${getMeasuredSourceLabel(measuredSource)}" — values are not derived from real pixel analysis. Strong claims are not permitted.`)
+  }
 
   // If noise is too high, raise caution
   if (stateVector.noiseLevel > 0.55) {
@@ -60,8 +71,9 @@ export function buildObservationHomeCheck(result: ObservationPipelineResult): Ob
     reasons.push('Claim strength exceeds confidence level – soften language.')
   }
 
-  // Allow strong candidate only if all conditions are favorable
+  // Allow strong candidate only if all conditions are favorable AND measurement is not capped
   if (
+    !softenClaim &&
     stateVector.particleLikelihood > 0.65 &&
     stateVector.confidence > 0.6 &&
     stateVector.artifactRisk < 0.35 &&
