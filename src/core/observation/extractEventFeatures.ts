@@ -9,6 +9,7 @@ import {
 
 const LUMINANCE_MAX = 255
 const NOISE_STD_NORMALIZER = 40
+const PIXEL_ANALYSIS_VERSION = 'phase1-pixel-v1'
 
 /** Clamp a value between 0 and 1 */
 const clamp = (v: number): number => Math.max(0, Math.min(1, v))
@@ -27,6 +28,20 @@ function buildDimensionFeatures(width: number, height: number): EventFeatures {
     linearity,
     curvature: 0.2,
     scatterScore: 0.25,
+    clusterScore: 0.2,
+    rarityScore: 0.5,
+    noiseScore: 0.3,
+  }
+}
+
+function buildConservativePixelPhaseFeatures(): EventFeatures {
+  return {
+    brightness: 0.5,
+    length: 0.3,
+    width: 0.15,
+    linearity: 0.5,
+    curvature: 0.2,
+    scatterScore: 0.2,
     clusterScore: 0.2,
     rarityScore: 0.5,
     noiseScore: 0.3,
@@ -86,17 +101,52 @@ function buildFeaturesFromLuminance(
 ): { features: EventFeatures; thresholdSignal: ThresholdSignal } {
   const stats = computeBrightnessStats(luminance)
   const foreground = extractForegroundMask(luminance, width, height, stats)
-  const dimensions = buildDimensionFeatures(width, height)
+  const conservative = buildConservativePixelPhaseFeatures()
 
   return {
     features: {
-      ...dimensions,
+      ...conservative,
       brightness: deriveBrightness(stats, foreground),
       noiseScore: deriveNoiseScore(luminance, foreground, stats.std),
       rarityScore: 0.5,
     },
     thresholdSignal: { stats, foreground },
   }
+}
+
+function buildPlaceholderThresholdSignal(
+  width: number,
+  height: number,
+  extractionError?: string,
+): ThresholdSignal {
+  return {
+    stats: {
+      mean: 0,
+      median: 0,
+      std: 0,
+      max: 0,
+      min: 0,
+      threshold: 0,
+    },
+    foreground: {
+      width: Math.max(1, width),
+      height: Math.max(1, height),
+      threshold: 0,
+      pixels: [],
+      count: 0,
+      ratio: 0,
+    },
+    extractionError,
+  }
+}
+
+export type PixelMeasuredBundle = {
+  features: EventFeatures
+  brightnessStats: BrightnessStats
+  foreground: ForegroundMask
+  measuredSource: 'pixel-derived' | 'placeholder-dimension'
+  analysisVersion: string
+  warnings: string[]
 }
 
 export function extractEventFeatures(raw: Partial<EventFeatures>): EventFeatures {
@@ -113,11 +163,11 @@ export function extractEventFeatures(raw: Partial<EventFeatures>): EventFeatures
   }
 }
 
-export async function extractFeaturesFromUploadedImage(
+export async function analyzeImagePixels(
   imageUri: string,
   width: number,
   height: number,
-): Promise<{ features: EventFeatures; measuredSource: MeasuredSource; thresholdSignal?: ThresholdSignal }> {
+): Promise<PixelMeasuredBundle> {
   const dimensionFeatures = buildDimensionFeatures(width, height)
 
   try {
@@ -125,33 +175,43 @@ export async function extractFeaturesFromUploadedImage(
     const measured = buildFeaturesFromLuminance(loaded.width, loaded.height, loaded.luminance)
     return {
       features: measured.features,
+      brightnessStats: measured.thresholdSignal.stats,
+      foreground: measured.thresholdSignal.foreground,
       measuredSource: 'pixel-derived',
-      thresholdSignal: measured.thresholdSignal,
+      analysisVersion: PIXEL_ANALYSIS_VERSION,
+      warnings: [],
     }
   } catch (error) {
+    const warning = error instanceof Error
+      ? `Pixel analysis failed; using placeholder dimension features: ${error.message}`
+      : 'Pixel analysis failed; using placeholder dimension features.'
+    const thresholdSignal = buildPlaceholderThresholdSignal(width, height, warning)
+
     return {
       features: dimensionFeatures,
+      brightnessStats: thresholdSignal.stats,
+      foreground: thresholdSignal.foreground,
       measuredSource: 'placeholder-dimension',
-      thresholdSignal: {
-        stats: {
-          mean: 0,
-          median: 0,
-          std: 0,
-          max: 0,
-          min: 0,
-          threshold: 0,
-        },
-        foreground: {
-          width: Math.max(1, width),
-          height: Math.max(1, height),
-          threshold: 0,
-          pixels: [],
-          count: 0,
-          ratio: 0,
-        },
-        extractionError: error instanceof Error ? error.message : 'Foreground extraction failed.',
-      },
+      analysisVersion: PIXEL_ANALYSIS_VERSION,
+      warnings: [warning],
     }
+  }
+}
+
+export async function extractFeaturesFromUploadedImage(
+  imageUri: string,
+  width: number,
+  height: number,
+): Promise<{ features: EventFeatures; measuredSource: MeasuredSource; thresholdSignal?: ThresholdSignal }> {
+  const measured = await analyzeImagePixels(imageUri, width, height)
+  return {
+    features: measured.features,
+    measuredSource: measured.measuredSource,
+    thresholdSignal: {
+      stats: measured.brightnessStats,
+      foreground: measured.foreground,
+      extractionError: measured.warnings[0],
+    },
   }
 }
 

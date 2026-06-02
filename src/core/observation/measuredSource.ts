@@ -35,8 +35,7 @@ export function getMeasuredSourceLabel(source: MeasuredSource): string {
 
 /**
  * Derive a sensible default MeasuredSource from an ObservationSourceType.
- * Until real pixel analysis is wired in, uploaded-image and camera inputs
- * always yield placeholder-dimension values.
+ * This is only used when explicit measurement provenance is missing.
  */
 export function deriveMeasuredSource(sourceType: ObservationSourceType | undefined): MeasuredSource {
   switch (sourceType) {
