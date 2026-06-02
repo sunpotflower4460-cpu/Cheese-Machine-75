@@ -12,6 +12,7 @@ import {
   DEFAULT_MIN_COMPONENT_PIXELS,
   detectConnectedComponents,
 } from '../measurement/connectedComponents'
+import { detectTracksFromComponents } from '../measurement/pcaTrack'
 
 const LUMINANCE_MAX = 255
 const NOISE_STD_NORMALIZER = 40
@@ -108,16 +109,27 @@ function buildFeaturesFromLuminance(
   const stats = computeBrightnessStats(luminance)
   const foreground = extractForegroundMask(luminance, width, height, stats)
   const components = detectConnectedComponents(foreground)
+  const detectedTracks = detectTracksFromComponents(components.acceptedComponents)
+  const primaryTrack = detectedTracks[0]
   const conservative = buildConservativePixelPhaseFeatures()
+  const diagonal = Math.hypot(width, height)
+  const normalizedLength = primaryTrack ? clamp(primaryTrack.lengthPx / Math.max(1, diagonal)) : conservative.length
+  const normalizedWidth = primaryTrack ? clamp(primaryTrack.widthPx / Math.max(1, diagonal)) : conservative.width
+  const linearity = primaryTrack ? clamp(primaryTrack.linearity) : conservative.linearity
+  const curvature = primaryTrack ? clamp(primaryTrack.curvature) : conservative.curvature
 
   return {
     features: {
       ...conservative,
+      length: Number(normalizedLength.toFixed(4)),
+      width: Number(normalizedWidth.toFixed(4)),
+      linearity: Number(linearity.toFixed(4)),
+      curvature: Number(curvature.toFixed(4)),
       brightness: deriveBrightness(stats, foreground),
       noiseScore: deriveNoiseScore(luminance, foreground, stats.std),
       rarityScore: 0.5,
     },
-    thresholdSignal: { stats, foreground, components },
+    thresholdSignal: { stats, foreground, components, detectedTracks },
   }
 }
 
@@ -152,12 +164,14 @@ function buildPlaceholderThresholdSignal(
       connectivity: DEFAULT_COMPONENT_CONNECTIVITY,
       sortBy: DEFAULT_COMPONENT_SORT,
     },
+    detectedTracks: [],
     extractionError,
   }
 }
 
 export type PixelMeasuredBundle = {
   features: EventFeatures
+  thresholdSignal: ThresholdSignal
   brightnessStats: BrightnessStats
   foreground: ForegroundMask
   measuredSource: 'pixel-derived' | 'placeholder-dimension'
@@ -191,6 +205,7 @@ export async function analyzeImagePixels(
     const measured = buildFeaturesFromLuminance(loaded.width, loaded.height, loaded.luminance)
     return {
       features: measured.features,
+      thresholdSignal: measured.thresholdSignal,
       brightnessStats: measured.thresholdSignal.stats,
       foreground: measured.thresholdSignal.foreground,
       measuredSource: 'pixel-derived',
@@ -205,6 +220,7 @@ export async function analyzeImagePixels(
 
     return {
       features: dimensionFeatures,
+      thresholdSignal,
       brightnessStats: thresholdSignal.stats,
       foreground: thresholdSignal.foreground,
       measuredSource: 'placeholder-dimension',
@@ -220,13 +236,13 @@ export async function extractFeaturesFromUploadedImage(
   height: number,
 ): Promise<{ features: EventFeatures; measuredSource: MeasuredSource; thresholdSignal?: ThresholdSignal }> {
   const measured = await analyzeImagePixels(imageUri, width, height)
+  const extractionError = measured.warnings[0]
   return {
     features: measured.features,
     measuredSource: measured.measuredSource,
     thresholdSignal: {
-      stats: measured.brightnessStats,
-      foreground: measured.foreground,
-      extractionError: measured.warnings[0],
+      ...measured.thresholdSignal,
+      extractionError,
     },
   }
 }

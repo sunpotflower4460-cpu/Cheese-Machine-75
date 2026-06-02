@@ -59,10 +59,28 @@ export type ConnectedComponents = {
   sortBy: 'pixelCount' | 'totalLuminance'
 }
 
+export type DetectedTrack = {
+  id: string
+  componentId: string
+  kind?: 'spot' | 'short-line' | 'long-line' | 'cluster' | 'curved' | 'unknown'
+  points: Array<{ x: number; y: number }>
+  principalAxis: {
+    start: { x: number; y: number }
+    end: { x: number; y: number }
+    angleRad: number
+  }
+  lengthPx: number
+  widthPx: number
+  linearity: number
+  curvature: number
+  confidence: number
+}
+
 export type ThresholdSignal = {
   stats: BrightnessStats
   foreground: ForegroundMask
   components?: ConnectedComponents
+  detectedTracks?: DetectedTrack[]
   extractionError?: string
 }
 

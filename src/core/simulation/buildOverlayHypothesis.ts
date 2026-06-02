@@ -12,14 +12,31 @@
  * simulated: hypothesis-driven overlay lines for comparison against measurement
  */
 
-import type { EventFeatures, OverlayHypothesis } from '../../types/observation'
+import type { EventFeatures, OverlayHypothesis, ThresholdSignal } from '../../types/observation'
 
 /** Build overlay hypotheses from event features */
-export function buildOverlayHypothesis(features: EventFeatures): OverlayHypothesis[] {
+export function buildOverlayHypothesis(features: EventFeatures, thresholdSignal?: ThresholdSignal): OverlayHypothesis[] {
   const hypotheses: OverlayHypothesis[] = []
+  const measuredTrack = thresholdSignal?.detectedTracks?.[0]
+  const measurementWidth = Math.max(1, thresholdSignal?.foreground.width ?? 1)
+  const measurementHeight = Math.max(1, thresholdSignal?.foreground.height ?? 1)
 
   // Measured line: approximate actual track from features
-  if (features.length > 0.1) {
+  if (measuredTrack) {
+    const axisPoints = interpolateLine(
+      scalePointToOverlay(measuredTrack.principalAxis.start, measurementWidth, measurementHeight),
+      scalePointToOverlay(measuredTrack.principalAxis.end, measurementWidth, measurementHeight),
+      10,
+    )
+    hypotheses.push({
+      id: measuredTrack.id,
+      kind: 'measured',
+      label: 'Measured Track',
+      confidence: measuredTrack.confidence,
+      color: '#4ade80',
+      points: axisPoints,
+    })
+  } else if (features.length > 0.1) {
     const x1 = 10
     const y1 = 50 + (features.curvature * 20) - 10
     const x2 = 10 + features.length * 80
@@ -67,6 +84,17 @@ export function buildOverlayHypothesis(features: EventFeatures): OverlayHypothes
   }
 
   return hypotheses
+}
+
+function scalePointToOverlay(
+  point: { x: number; y: number },
+  width: number,
+  height: number,
+): { x: number; y: number } {
+  return {
+    x: (point.x / Math.max(1, width - 1)) * 100,
+    y: (point.y / Math.max(1, height - 1)) * 100,
+  }
 }
 
 function interpolateLine(

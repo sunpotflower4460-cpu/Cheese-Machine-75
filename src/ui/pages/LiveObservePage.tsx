@@ -66,7 +66,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
   const result = runObservationPipeline(event)
   const guide = buildGuideText(result)
   const homeCheck = buildObservationHomeCheck(result)
-  const overlays = buildOverlayHypothesis(event.features)
+  const overlays = buildOverlayHypothesis(event.features, event.thresholdSignal)
   const sv = result.stateVector
   const currentMeasuredSource = event.measuredSource ?? deriveMeasuredSource(event.sourceType)
   const provenancePreview = previewAnalysisProvenance(currentMeasuredSource, event.sourceType)
