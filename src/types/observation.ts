@@ -328,6 +328,16 @@ export type ObservationHomeCheck = {
   reasons: string[]
 }
 
+/**
+ * Provenance of an overlay shape.
+ *
+ * measured:    drawn directly from real detected coordinates (DetectedTrack)
+ * inferred:    derived / extrapolated from measured data (predicted extension)
+ * simulated:   hypothesis-driven model line for comparison only
+ * placeholder: feature-generated stand-in; not derived from real pixel geometry
+ */
+export type OverlayOrigin = 'measured' | 'inferred' | 'simulated' | 'placeholder'
+
 /** Overlay hypothesis for simulation display */
 export type OverlayHypothesis = {
   id: string
@@ -337,6 +347,8 @@ export type OverlayHypothesis = {
    * simulated: hypothesis-driven overlay line for comparison (Inferred layer)
    */
   kind: 'measured' | 'predicted' | 'simulated'
+  /** Provenance of this overlay — prevents UI from treating inferred/simulated lines as measured */
+  origin: OverlayOrigin
   label: string
   points: Array<{ x: number; y: number }>
   confidence: number
