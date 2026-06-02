@@ -11,6 +11,7 @@ import { EventCard } from '../components/EventCard'
 import { Layers, ChevronLeft, Tag, Cpu, AlertTriangle, Upload, Camera } from 'lucide-react'
 import { MeasuredSourceBadge } from '../components/MeasuredSourceBadge'
 import { AnalysisProvenanceCard } from '../components/AnalysisProvenanceCard'
+import { classifyMorphology } from '../../core/morphology/classifyMorphology'
 
 type EventDetailPageProps = {
   crystal: ObservationCrystal | null
@@ -46,6 +47,8 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
   const sourceLabel = crystal.sourceType ?? 'sample'
   const isUploaded = sourceLabel === 'uploaded-image'
   const isCamera = sourceLabel === 'camera'
+  // Use saved morphologyCandidate if available; otherwise classify on the fly
+  const morphologyCandidate = crystal.morphologyCandidate ?? classifyMorphology(crystal.features)
 
   const TABS: Array<{ id: Tab; label: string; layerNote: string }> = [
     { id: 'raw', label: 'Raw', layerNote: 'Raw sensor capture: source image + capture context (no processing applied)' },
@@ -399,8 +402,31 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
               </div>
             </div>
 
-            <GuidePanel guide={crystal.guideBundle} />
+            {/* Morphology Candidate — Inferred */}
+            <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
+              <p className="text-slate-500 text-xs uppercase tracking-wide mb-2 flex items-center gap-1">
+                Morphology Candidate <span className="text-slate-600 text-[10px] ml-1">[Inferred]</span>
+              </p>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white text-sm font-semibold">{morphologyCandidate.label}</span>
+                <span className="text-slate-300 font-mono text-xs">{(morphologyCandidate.confidence * 100).toFixed(0)}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden mb-2">
+                <div className="h-full bg-violet-500 rounded-full" style={{ width: `${Math.round(morphologyCandidate.confidence * 100)}%` }} />
+              </div>
+              <div className="space-y-0.5 mb-2">
+                {morphologyCandidate.reasons.map((r, i) => (
+                  <p key={i} className="text-slate-400 text-xs">· {r}</p>
+                ))}
+              </div>
+              <div className="bg-amber-900/20 border border-amber-800/30 rounded p-2 space-y-1">
+                {morphologyCandidate.cautionNotes.map((n, i) => (
+                  <p key={i} className="text-amber-300 text-xs">⚠ {n}</p>
+                ))}
+              </div>
+            </div>
 
+            <GuidePanel guide={crystal.guideBundle} />
             {crystal.pipelineResult.liftedPatterns.length > 0 && (
               <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
                 <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Lifted Patterns <span className="text-slate-600 text-[10px]">[M4 — Inferred]</span></p>

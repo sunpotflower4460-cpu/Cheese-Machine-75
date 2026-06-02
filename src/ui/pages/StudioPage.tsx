@@ -266,6 +266,31 @@ export function StudioPage({ crystal, crystals, navigate, navigateToEvent }: Stu
           </div>
         </div>
 
+        {/* Morphology Candidate — Inferred (classified from Measured features) */}
+        <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-slate-500 text-xs uppercase tracking-wide">Morphology — Candidate Shape</p>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-blue-900/30 text-blue-400 border-blue-700/40">Inferred</span>
+          </div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-white text-sm font-semibold">{vm.morphologyCandidate.label}</span>
+            <span className="text-slate-300 font-mono text-xs">{(vm.morphologyCandidate.confidence * 100).toFixed(0)}% confidence</span>
+          </div>
+          <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden mb-2">
+            <div className="h-full bg-violet-500 rounded-full" style={{ width: `${Math.round(vm.morphologyCandidate.confidence * 100)}%` }} />
+          </div>
+          <div className="space-y-1 mb-2">
+            {vm.morphologyCandidate.reasons.map((r, i) => (
+              <p key={i} className="text-slate-400 text-[11px]">· {r}</p>
+            ))}
+          </div>
+          <div className="bg-amber-900/20 border border-amber-800/30 rounded p-2 space-y-1">
+            {vm.morphologyCandidate.cautionNotes.map((n, i) => (
+              <p key={i} className="text-amber-300 text-[11px]">⚠ {n}</p>
+            ))}
+          </div>
+        </div>
+
         {/* Nodes / Patterns (M4) — Inferred */}
         <div ref={nodesRef} className={`space-y-4 ${highlight('nodes')}`}>
           <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">

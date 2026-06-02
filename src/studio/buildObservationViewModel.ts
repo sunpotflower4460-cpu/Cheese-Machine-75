@@ -4,6 +4,7 @@
 
 import type {
   GuideBundle,
+  MorphologyCandidate,
   ObservationCrystal,
   ObservationHomeCheck,
   ObservationPipelineResult,
@@ -12,6 +13,7 @@ import type {
 } from '../types/observation'
 import { OBS_NODE_DICT, OBS_PATTERN_RULES } from '../core/observationNodeData'
 import { getMappingById } from '../core/mappings/mappingCatalog'
+import { classifyMorphology } from '../core/morphology/classifyMorphology'
 
 export type ObservationSummaryCard = {
   title: string
@@ -72,6 +74,8 @@ export type ObservationViewModel = {
   stateVectorItems: ObservationStateVectorItem[]
   flowBlurb: string
   overlayHints: string[]
+  /** Morphology candidate classification — Inferred layer. Cautious shape label; not a physical origin claim. */
+  morphologyCandidate: MorphologyCandidate
 }
 
 export function buildObservationViewModel(
@@ -208,6 +212,9 @@ export function buildObservationViewModel(
     overlayHints.push('A simulated curved-track overlay is available.')
   }
 
+  // Use saved morphologyCandidate if available; otherwise classify on the fly
+  const morphologyCandidate = crystal?.morphologyCandidate ?? classifyMorphology(result.input.features)
+
   return {
     summaryCard,
     guidePreview: guide,
@@ -221,5 +228,6 @@ export function buildObservationViewModel(
     stateVectorItems,
     flowBlurb,
     overlayHints,
+    morphologyCandidate,
   }
 }
