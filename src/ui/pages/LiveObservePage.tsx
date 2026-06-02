@@ -26,6 +26,9 @@ type LiveObservePageProps = {
 }
 
 type InputMode = 'sample' | 'upload' | 'camera'
+type SetupChecklistKey = 'coverLens' | 'reduceLeaks' | 'keepStill' | 'avoidHeat' | 'treatAsCandidates'
+
+const SETUP_GUIDE_HIDDEN_KEY = 'live-observe-setup-guide-hidden'
 
 export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageProps) {
   const [inputMode, setInputMode] = useState<InputMode>('camera')
@@ -34,6 +37,24 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
   const [cameraInput, setCameraInput] = useState<ObservationInput | null>(null)
   const [showOverlay, setShowOverlay] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
+  const [setupGuideHidden, setSetupGuideHidden] = useState(() => {
+    if (typeof localStorage === 'undefined') {
+      return false
+    }
+    try {
+      return localStorage.getItem(SETUP_GUIDE_HIDDEN_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+  const [setupGuideExpanded, setSetupGuideExpanded] = useState(false)
+  const [setupChecklist, setSetupChecklist] = useState<Record<SetupChecklistKey, boolean>>({
+    coverLens: false,
+    reduceLeaks: false,
+    keepStill: false,
+    avoidHeat: false,
+    treatAsCandidates: false,
+  })
 
   // Resolve active event based on mode
   const { event: sampleEvent } = detectNextEvent(eventIndex)
@@ -92,6 +113,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
   const qualityNotes = Array.from(new Set([...guide.cautionNotes, ...homeCheck.reasons, ...provenancePreview.warnings]))
   const hasCandidateInput = (inputMode === 'upload' && !!uploadedInput) || (inputMode === 'camera' && !!cameraInput)
   const showCandidateReview = inputMode !== 'sample' && hasCandidateInput
+  const calibrationApplied = provenancePreview.calibrationStatus === 'applied'
 
   const handleNext = useCallback(() => {
     setSavedId(null)
@@ -139,6 +161,33 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
     }
   }, [inputMode, handleCameraClear, handleImageClear])
 
+  const toggleSetupCheck = useCallback((key: SetupChecklistKey) => {
+    setSetupChecklist((prev) => ({ ...prev, [key]: !prev[key] }))
+  }, [])
+
+  const handleHideSetupGuide = useCallback(() => {
+    setSetupGuideHidden(true)
+    setSetupGuideExpanded(false)
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(SETUP_GUIDE_HIDDEN_KEY, '1')
+      } catch {
+        // no-op
+      }
+    }
+  }, [])
+
+  const handleShowSetupGuide = useCallback(() => {
+    setSetupGuideHidden(false)
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.removeItem(SETUP_GUIDE_HIDDEN_KEY)
+      } catch {
+        // no-op
+      }
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <NavBar navigate={navigate} current="/observe" />
@@ -155,6 +204,87 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
             {inputMode === 'camera' && 'camera'}
           </div>
         </div>
+
+        {!setupGuideHidden ? (
+          <div className="mb-4 bg-slate-900/80 border border-slate-700 rounded-lg p-3">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <p className="text-xs uppercase tracking-wide text-slate-400 font-semibold">Setup Guide</p>
+              <button
+                onClick={handleHideSetupGuide}
+                className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                Skip for now
+              </button>
+            </div>
+            <p className="text-sm text-slate-200 leading-relaxed mb-3">
+              Covering the lens reduces ordinary visible light. This can make transient bright sensor events easier to inspect.
+            </p>
+            <p className="text-xs text-slate-400 mb-3">
+              This app records candidates and uncertainty; a single frame cannot confirm particle origin.
+            </p>
+            <div className="space-y-2 text-xs">
+              <label className="flex items-start gap-2 text-slate-300">
+                <input type="checkbox" checked={setupChecklist.coverLens} onChange={() => toggleSetupCheck('coverLens')} className="mt-0.5" />
+                <span>Cover the lens to reduce ordinary visible light.</span>
+              </label>
+              <label className="flex items-start gap-2 text-slate-300">
+                <input type="checkbox" checked={setupChecklist.reduceLeaks} onChange={() => toggleSetupCheck('reduceLeaks')} className="mt-0.5" />
+                <span>Reduce light leaks around the camera and enclosure.</span>
+              </label>
+              <label className="flex items-start gap-2 text-slate-300">
+                <input type="checkbox" checked={setupChecklist.keepStill} onChange={() => toggleSetupCheck('keepStill')} className="mt-0.5" />
+                <span>Keep the device stable while capturing or observing.</span>
+              </label>
+              <label className="flex items-start gap-2 text-slate-300">
+                <input type="checkbox" checked={setupChecklist.avoidHeat} onChange={() => toggleSetupCheck('avoidHeat')} className="mt-0.5" />
+                <span>Avoid heat buildup when possible to reduce sensor noise.</span>
+              </label>
+              <label className="flex items-start gap-2 text-slate-300">
+                <input type="checkbox" checked={setupChecklist.treatAsCandidates} onChange={() => toggleSetupCheck('treatAsCandidates')} className="mt-0.5" />
+                <span>Treat outputs as candidates that need recheck, not confirmed detections.</span>
+              </label>
+              <p className="text-slate-400">
+                Calibration status:{' '}
+                <span className={calibrationApplied ? 'text-green-400' : 'text-amber-300'}>
+                  {calibrationApplied ? 'Applied' : 'Not applied'}
+                </span>
+                . Calibration helps identify repeated sensor artifacts.
+              </p>
+              <p className="text-slate-400">
+                Current analysis mode:{' '}
+                <span className="font-mono text-slate-300">{currentMeasuredSource}</span>
+                {' • '}
+                <span className="font-mono text-slate-300">{provenancePreview.algorithmId}</span>
+              </p>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <button
+                onClick={() => setSetupGuideExpanded((v) => !v)}
+                className="text-xs text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                {setupGuideExpanded ? 'Hide details' : 'Why this matters'}
+              </button>
+              <button
+                onClick={handleHideSetupGuide}
+                className="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded transition-colors"
+              >
+                Continue to Capture/Observe
+              </button>
+            </div>
+            {setupGuideExpanded && (
+              <p className="mt-3 text-xs text-slate-400 leading-relaxed">
+                Dark setup reduces ordinary light and repeatable artifacts so candidate features are easier to inspect. Even with careful setup, event origin stays uncertain from a single frame.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="mb-4 flex items-center justify-between bg-slate-900/50 border border-slate-800 rounded-lg p-2.5">
+            <p className="text-xs text-slate-500">Setup Guide hidden for returning observation sessions.</p>
+            <button onClick={handleShowSetupGuide} className="text-xs text-slate-300 hover:text-white transition-colors">
+              Show guide
+            </button>
+          </div>
+        )}
 
         {/* Camera-first mode: show camera panel prominently */}
         {inputMode === 'camera' && (
