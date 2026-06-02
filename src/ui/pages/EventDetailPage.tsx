@@ -40,7 +40,7 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
     )
   }
 
-  const overlays = buildOverlayHypothesis(crystal.features)
+  const overlays = buildOverlayHypothesis(crystal.features, crystal.pipelineResult.input.thresholdSignal)
   const sv = crystal.pipelineResult.stateVector
   const similarCrystals = crystal.memoryLinks.map((id) => crystals.find((c) => c.id === id)).filter((c): c is ObservationCrystal => c !== undefined)
   const sourceLabel = crystal.sourceType ?? 'sample'
