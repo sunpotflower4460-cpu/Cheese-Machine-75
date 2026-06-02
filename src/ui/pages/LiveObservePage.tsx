@@ -14,7 +14,7 @@ import { buildObservationCrystal, previewAnalysisProvenance } from '../../core/b
 import { buildOverlayHypothesis } from '../../core/simulation/buildOverlayHypothesis'
 import { detectNextEvent, buildInputFromUploadedImage, buildInputFromCameraFrame } from '../../core/observation/detectObservationEvent'
 import { extractEventFeatures } from '../../core/observation/extractEventFeatures'
-import { ChevronRight, Save, Layers, Eye, Upload, Camera } from 'lucide-react'
+import { ChevronRight, Save, Layers, Eye, Upload, Camera, AlertTriangle } from 'lucide-react'
 import { MeasuredSourceBadge } from '../components/MeasuredSourceBadge'
 import { deriveMeasuredSource } from '../../core/observation/measuredSource'
 import { AnalysisProvenanceCard } from '../components/AnalysisProvenanceCard'
@@ -37,6 +37,24 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
 
   // Resolve active event based on mode
   const { event: sampleEvent } = detectNextEvent(eventIndex)
+  const uploadPlaceholder: ObservationInput | null =
+    inputMode === 'upload' && !uploadedInput
+      ? {
+          eventId: 'upload-pending',
+          features: extractEventFeatures({}),
+          context: {
+            deviceId: 'uploaded-image',
+            sessionId: 'session-upload-pending',
+            timestamp: new Date().toISOString(),
+            exposureMs: 0,
+            notes: 'Awaiting image upload',
+          },
+          rawImageUri: '',
+          sourceType: 'uploaded-image',
+          measuredSource: 'placeholder-dimension',
+          notes: 'Waiting for image upload',
+        }
+      : null
   const cameraPlaceholder: ObservationInput | null =
     inputMode === 'camera' && !cameraInput
       ? {
@@ -55,10 +73,11 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
           notes: 'Waiting for camera capture',
         }
       : null
+  const activeUploadEvent = uploadedInput ?? uploadPlaceholder
   const activeCameraEvent = cameraInput ?? cameraPlaceholder
   const event: ObservationInput =
-    inputMode === 'upload' && uploadedInput
-      ? uploadedInput
+    inputMode === 'upload'
+      ? activeUploadEvent ?? sampleEvent
       : inputMode === 'camera'
         ? activeCameraEvent ?? sampleEvent
         : sampleEvent
@@ -70,6 +89,9 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
   const sv = result.stateVector
   const currentMeasuredSource = event.measuredSource ?? deriveMeasuredSource(event.sourceType)
   const provenancePreview = previewAnalysisProvenance(currentMeasuredSource, event.sourceType)
+  const qualityNotes = Array.from(new Set([...guide.cautionNotes, ...homeCheck.reasons, ...provenancePreview.warnings]))
+  const hasCandidateInput = (inputMode === 'upload' && !!uploadedInput) || (inputMode === 'camera' && !!cameraInput)
+  const showCandidateReview = inputMode !== 'sample' && hasCandidateInput
 
   const handleNext = useCallback(() => {
     setSavedId(null)
@@ -107,6 +129,16 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
     setSavedId(null)
   }, [])
 
+  const handleDiscardCandidate = useCallback(() => {
+    if (inputMode === 'camera') {
+      handleCameraClear()
+      return
+    }
+    if (inputMode === 'upload') {
+      handleImageClear()
+    }
+  }, [inputMode, handleCameraClear, handleImageClear])
+
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <NavBar navigate={navigate} current="/observe" />
@@ -138,7 +170,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
                 ✓ Frame captured as <span className="font-mono font-medium">sourceType: camera</span>
                 <br className="sm:hidden" />
                 <span className="hidden sm:inline"> — </span>
-                Save to archive as observation crystal
+                candidate ready for review (requires recheck before save)
               </div>
             )}
           </div>
@@ -152,6 +184,11 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
               <p className="text-slate-500 text-xs sm:text-sm text-center">
                 Select an image to use it as a Raw observation input
               </p>
+            )}
+            {uploadedInput && (
+              <div className="text-xs sm:text-sm text-blue-200 bg-blue-900/30 border border-blue-800/50 rounded-md p-3 text-center">
+                Uploaded candidate ready for review (measured bright pixels and track-like morphology require recheck)
+              </div>
             )}
           </div>
         )}
@@ -230,6 +267,19 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
           <MeasuredSourceBadge source={event.measuredSource ?? deriveMeasuredSource(event.sourceType)} showDescription />
         </div>
 
+        {/* Candidate review posture */}
+        {inputMode !== 'sample' && (
+          <div className={`mb-4 rounded-lg border p-3 text-xs ${showCandidateReview ? 'border-slate-700 bg-slate-900/70 text-slate-200' : 'border-slate-800 bg-slate-900/40 text-slate-500'}`}>
+            <p className="font-semibold uppercase tracking-wide mb-1">Candidate Review</p>
+            <p>
+              Inspect measured bright pixels and track-like morphology before saving.
+              {showCandidateReview
+                ? ' This candidate requires recheck and should not be treated as confirmed evidence.'
+                : ' Capture or upload input to start review.'}
+            </p>
+          </div>
+        )}
+
         {/* Image + overlay + State vector */}
         <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
           <div className="w-full sm:w-auto">
@@ -265,7 +315,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
               {(
                 [
                   ['Confidence', sv.confidence],
-                  ['Particle likelihood', sv.particleLikelihood],
+                  ['Track-like morphology likelihood', sv.particleLikelihood],
                   ['Artifact risk', sv.artifactRisk],
                   ['Noise level', sv.noiseLevel],
                 ] as [string, number][]
@@ -287,7 +337,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
 
             <div className="flex gap-2 flex-wrap">
               <ConfidenceBadge value={sv.confidence} label="conf" size="md" />
-              <ConfidenceBadge value={sv.particleLikelihood} label="particle" size="md" />
+              <ConfidenceBadge value={sv.particleLikelihood} label="track-like" size="md" />
             </div>
           </div>
         </div>
@@ -314,6 +364,23 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
           <AnalysisProvenanceCard provenance={provenancePreview} />
         </div>
 
+        {/* Quality notes / warnings */}
+        <div className="bg-slate-800 border border-amber-900/50 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle size={14} className="text-amber-400" />
+            <p className="text-amber-200 text-xs uppercase tracking-wide font-semibold">Quality notes</p>
+          </div>
+          {qualityNotes.length > 0 ? (
+            <ul className="space-y-1">
+              {qualityNotes.map((note) => (
+                <li key={note} className="text-amber-100/80 text-xs leading-relaxed">• {note}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-slate-400 text-xs">No additional warnings recorded. Candidate still requires recheck before saving.</p>
+          )}
+        </div>
+
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
           {inputMode === 'sample' && (
@@ -335,8 +402,33 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
             className="flex-1 flex items-center justify-center gap-2 bg-green-700 hover:bg-green-600 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors"
           >
             <Save size={16} />
-            {savedId ? 'Saved ✓' : 'Save Crystal'}
+            {savedId ? 'Saved ✓' : 'Save as Observation Crystal'}
           </button>
+          {inputMode !== 'sample' && (
+            <button
+              onClick={handleDiscardCandidate}
+              disabled={!hasCandidateInput || savedId !== null}
+              className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 disabled:bg-slate-900 disabled:text-slate-600 text-slate-200 px-4 py-3 rounded-lg text-sm font-medium transition-colors border border-slate-700"
+            >
+              {inputMode === 'camera' ? 'Retake' : 'Discard'}
+            </button>
+          )}
+          {savedId && (
+            <>
+              <button
+                onClick={() => navigate(`/event/${savedId}`)}
+                className="flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-600 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors"
+              >
+                Open Details
+              </button>
+              <button
+                onClick={() => navigate('/studio')}
+                className="flex items-center justify-center gap-2 bg-indigo-700 hover:bg-indigo-600 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors"
+              >
+                Open Studio
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
