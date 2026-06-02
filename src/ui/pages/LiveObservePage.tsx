@@ -234,8 +234,10 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
         <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
           <div className="w-full sm:w-auto">
             <OverlayCanvas
+              key={event.eventId}
               rawImageUri={event.rawImageUri}
               hypotheses={overlays}
+              thresholdSignal={event.thresholdSignal}
               showOverlay={showOverlay}
               width={200}
               height={200}
@@ -247,11 +249,11 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
               }`}
             >
               <Layers size={12} />
-              {showOverlay ? 'Hide overlay' : 'Show overlay'}
+              {showOverlay ? 'Hide overlay layers' : 'Show overlay layers'}
             </button>
             {showOverlay && (
               <p className="mt-1 text-slate-600 text-xs text-center leading-tight">
-                Solid: measured | Dashed: predicted | Dotted: simulated
+                Raw stays visible underneath. Toggle measured, inferred, simulated, and rejected layers below.
               </p>
             )}
           </div>
