@@ -18,6 +18,8 @@ import { ChevronRight, Save, Layers, Eye, Upload, Camera, AlertTriangle } from '
 import { MeasuredSourceBadge } from '../components/MeasuredSourceBadge'
 import { deriveMeasuredSource } from '../../core/observation/measuredSource'
 import { AnalysisProvenanceCard } from '../components/AnalysisProvenanceCard'
+import { classifyMorphology } from '../../core/morphology/classifyMorphology'
+import { candidateWording } from '../../core/wording/candidateWording'
 
 type LiveObservePageProps = {
   crystals: ObservationCrystal[]
@@ -110,6 +112,13 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
   const sv = result.stateVector
   const currentMeasuredSource = event.measuredSource ?? deriveMeasuredSource(event.sourceType)
   const provenancePreview = previewAnalysisProvenance(currentMeasuredSource, event.sourceType)
+  const candidateCopy = candidateWording({
+    morphology: classifyMorphology(event.features).morphologyClass,
+    qualityFlags: result.qualityAssessment?.flags ?? [],
+    measuredSource: currentMeasuredSource,
+    homeCheck,
+    calibrationStatus: provenancePreview.calibrationStatus,
+  })
   const qualityNotes = Array.from(new Set([...guide.cautionNotes, ...homeCheck.reasons, ...provenancePreview.warnings]))
   const hasCandidateInput = (inputMode === 'upload' && !!uploadedInput) || (inputMode === 'camera' && !!cameraInput)
   const showCandidateReview = inputMode !== 'sample' && hasCandidateInput
@@ -317,7 +326,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
             )}
             {uploadedInput && (
               <div className="text-xs sm:text-sm text-blue-200 bg-blue-900/30 border border-blue-800/50 rounded-md p-3 text-center">
-                Uploaded candidate ready for review (measured bright pixels and track-like morphology require recheck)
+                Uploaded candidate ready for review (single-frame pixel analysis remains candidate-only and requires recheck)
               </div>
             )}
           </div>
@@ -327,7 +336,7 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
         {inputMode === 'sample' && (
           <div className="mb-4">
             <p className="text-slate-500 text-xs sm:text-sm mb-3 text-center">
-              Cycling through built-in sample particle detection events
+              Cycling through built-in sample candidate events
             </p>
           </div>
         )}
@@ -402,11 +411,16 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
           <div className={`mb-4 rounded-lg border p-3 text-xs ${showCandidateReview ? 'border-slate-700 bg-slate-900/70 text-slate-200' : 'border-slate-800 bg-slate-900/40 text-slate-500'}`}>
             <p className="font-semibold uppercase tracking-wide mb-1">Candidate Review</p>
             <p>
-              Inspect measured bright pixels and track-like morphology before saving.
+              {candidateCopy.summarySentence}
               {showCandidateReview
-                ? ' This candidate requires recheck and should not be treated as confirmed evidence.'
+                ? ` ${candidateCopy.cautionSentence}`
                 : ' Capture or upload input to start review.'}
             </p>
+            {showCandidateReview && (
+              <p className="mt-1 text-slate-400">
+                Share-safe draft: {candidateCopy.publicShareText}
+              </p>
+            )}
           </div>
         )}
 

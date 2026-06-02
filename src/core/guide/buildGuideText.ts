@@ -10,7 +10,9 @@
 // Guide の材料 (GuideInput) を明示することで、どこから何が来ているかを追いやすくする。
 
 import type { GuideBundle, ObservationHomeCheck, ObservationPipelineResult } from '../../types/observation'
-import { shouldCapClaimStrength, getMeasuredSourceLabel } from '../observation/measuredSource'
+import { deriveMeasuredSource } from '../observation/measuredSource'
+import { classifyMorphology } from '../morphology/classifyMorphology'
+import { candidateWording } from '../wording/candidateWording'
 
 /**
  * M10 の入力材料をまとめた内部型。
@@ -60,34 +62,37 @@ export function buildGuideText(result: ObservationPipelineResult, homeCheck?: Ob
   })
   const { stateVector, activatedNodes, liftedPatterns, features } = guideInput
   const hasNode = (id: string) => activatedNodes.some((n) => n.id === id)
+  const qualityFlags = result.qualityAssessment?.flags ?? []
+  const measuredSource = result.input.measuredSource ?? deriveMeasuredSource(result.input.sourceType)
+  const wording = candidateWording({
+    morphology: classifyMorphology(features).morphologyClass,
+    qualityFlags,
+    measuredSource,
+    homeCheck: guideInput.homeCheck,
+    calibrationStatus: qualityFlags.includes('calibrated-session') ? 'applied' : 'none',
+  })
 
   // Quick guide – 1-2 sentences
-  let quickGuide = ''
-  if (stateVector.particleLikelihood > 0.65) {
-    quickGuide = `This event shows features consistent with a particle track (linearity: ${features.linearity.toFixed(2)}, noise: ${features.noiseScore.toFixed(2)}). Further verification is recommended.`
-  } else if (stateVector.artifactRisk > 0.65) {
-    quickGuide = `Multiple artifact indicators are present (noise: ${features.noiseScore.toFixed(2)}). This event is likely a sensor artifact rather than a real particle.`
-  } else if (hasNode('worth_recheck')) {
-    quickGuide = `This is an ambiguous event that warrants a second look. Features are interesting but not clearly classifiable without more context.`
-  } else {
-    quickGuide = `Event observed with mixed indicators. Confidence is moderate. Review the full analysis below for details.`
+  let quickGuide = wording.summarySentence
+  if (stateVector.artifactRisk > 0.65 || hasNode('worth_recheck')) {
+    quickGuide = `${wording.summarySentence} ${wording.cautionSentence}`
   }
 
   // Deep guide
   const lines: string[] = []
-  lines.push(`**What is seen:** An event with brightness ${features.brightness.toFixed(2)}, length ${features.length.toFixed(2)}, linearity ${features.linearity.toFixed(2)}.`)
+  lines.push(`**What is seen:** ${wording.summarySentence} Brightness ${features.brightness.toFixed(2)}, length ${features.length.toFixed(2)}, linearity ${features.linearity.toFixed(2)}.`)
 
   if (hasNode('linear_trace')) {
-    lines.push(`The track shows high linearity (${features.linearity.toFixed(2)}), suggesting a straight path – a classic signature of a minimum-ionizing particle.`)
+    lines.push(`A high-linearity path is present (${features.linearity.toFixed(2)}), supporting a track-like candidate interpretation.`)
   }
   if (hasNode('curved_track')) {
-    lines.push(`The track shows significant curvature (${features.curvature.toFixed(2)}). This could indicate interaction with a magnetic field, or a heavier particle undergoing scattering.`)
+    lines.push(`The path shows significant curvature (${features.curvature.toFixed(2)}). Keep this as a geometry hint only and recheck against artifacts.`)
   }
   if (hasNode('scattered_path')) {
-    lines.push(`Multiple scattering is visible (scatter score: ${features.scatterScore.toFixed(2)}). This is consistent with a heavy particle or compound interaction, but also with noise accumulation.`)
+    lines.push(`Scattering is visible (scatter score: ${features.scatterScore.toFixed(2)}). This can reflect complex signal structure, but also noise accumulation.`)
   }
   if (hasNode('clustered_flash')) {
-    lines.push(`A tight cluster of pixels is present. This can occur from delta rays, low-energy neutron scatter, or sensor hot-pixel groups.`)
+    lines.push(`A tight cluster of bright pixels is present. This can occur from transient sensor events or hot-pixel groups.`)
   }
 
   lines.push(`**Why it appears this way:** The node pipeline activated ${activatedNodes.length} nodes. Dominant signals: ${activatedNodes.slice(0, 3).map((n) => n.label).join(', ')}.`)
@@ -111,16 +116,10 @@ export function buildGuideText(result: ObservationPipelineResult, homeCheck?: Ob
   }
 
   // Caution notes
-  const cautionNotes: string[] = []
-
-  // If the measurement source is not real pixel data, always add a top caution note.
-  const measuredSource = result.input.measuredSource
-  if (measuredSource && shouldCapClaimStrength(measuredSource)) {
-    cautionNotes.push(`Measurement source: "${getMeasuredSourceLabel(measuredSource)}" — these values were NOT derived from real pixel analysis. Do not treat them as genuine sensor measurements.`)
-  }
+  const cautionNotes: string[] = [wording.cautionSentence]
 
   if (stateVector.artifactRisk > 0.5) {
-    cautionNotes.push(`Artifact risk is elevated (${(stateVector.artifactRisk * 100).toFixed(0)}%). Do not claim particle detection without independent confirmation.`)
+    cautionNotes.push(`Artifact risk is elevated (${(stateVector.artifactRisk * 100).toFixed(0)}%). Keep this as a candidate and recheck before interpretation.`)
   }
   if (features.noiseScore > 0.5) {
     cautionNotes.push(`Noise level is significant (${features.noiseScore.toFixed(2)}). Signal features may be partially noise-driven.`)
