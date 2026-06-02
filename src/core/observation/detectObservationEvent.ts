@@ -24,7 +24,8 @@ export function detectNextEvent(currentIndex: number): { event: ObservationInput
 
 /**
  * Build an ObservationInput from a user-uploaded image.
- * Feature extraction is simplified (placeholder); image is kept as rawImageUri.
+ * Feature extraction uses pixel analysis with placeholder fallback;
+ * image is kept as rawImageUri.
  */
 export function buildInputFromUploadedImage(
   imageUri: string,
