@@ -29,11 +29,20 @@ export function buildObservationHomeCheck(result: ObservationPipelineResult): Ob
   const { stateVector, activatedNodes } = result
   const hasNode = (id: string) => activatedNodes.some((n) => n.id === id)
   const reasons: string[] = []
+  const qualityFlags = result.qualityAssessment?.flags ?? []
 
   let cautionUp = false
   let softenClaim = false
   let holdAsInteresting = false
   let keepAsStrongCandidate = false
+
+  const hasQualityFlag = (flag: typeof qualityFlags[number]) => qualityFlags.includes(flag)
+  const hasClaimCapFlag = hasQualityFlag('placeholder-measurement') || hasQualityFlag('baseline-missing')
+  const artifactRiskBoost = hasQualityFlag('hot-pixel-overlap-high') ? 0.2 : 0
+  const artifactRisk = Math.min(1, stateVector.artifactRisk + artifactRiskBoost)
+  const confidenceSupport =
+    Number(hasQualityFlag('calibrated-session')) * 0.03 +
+    Number(hasQualityFlag('good-dark-frame')) * 0.02
 
   // If the measured source is placeholder or authored, cap claim strength unconditionally.
   // The current pipeline has no real pixel analyzer; all uploaded-image and camera values
@@ -43,6 +52,12 @@ export function buildObservationHomeCheck(result: ObservationPipelineResult): Ob
     cautionUp = true
     softenClaim = true
     reasons.push(`Measurement source is "${getMeasuredSourceLabel(measuredSource)}" — values are not derived from real pixel analysis. Strong claims are not permitted.`)
+  }
+
+  if (hasClaimCapFlag) {
+    cautionUp = true
+    softenClaim = true
+    reasons.push('Quality flags indicate placeholder or missing baseline calibration; claim strength is capped.')
   }
 
   // If noise is too high, raise caution
@@ -59,10 +74,15 @@ export function buildObservationHomeCheck(result: ObservationPipelineResult): Ob
   }
 
   // Artifact risk suppresses particle claims
-  if (stateVector.artifactRisk > 0.5 && stateVector.claimStrength > 0.6) {
+  if (artifactRisk > 0.5 && stateVector.claimStrength > 0.6) {
     softenClaim = true
     cautionUp = true
-    reasons.push(`Artifact risk (${stateVector.artifactRisk.toFixed(2)}) is too high for strong particle claim.`)
+    reasons.push(`Artifact risk (${artifactRisk.toFixed(2)}) is too high for strong particle claim.`)
+  }
+
+  if (hasQualityFlag('hot-pixel-overlap-high')) {
+    cautionUp = true
+    reasons.push('Hot-pixel overlap quality flag raised artifact caution.')
   }
 
   // Guide text should not be too assertive if confidence is low
@@ -75,8 +95,8 @@ export function buildObservationHomeCheck(result: ObservationPipelineResult): Ob
   if (
     !softenClaim &&
     stateVector.particleLikelihood > 0.65 &&
-    stateVector.confidence > 0.6 &&
-    stateVector.artifactRisk < 0.35 &&
+    stateVector.confidence + confidenceSupport > 0.6 &&
+    artifactRisk < 0.35 &&
     !hasNode('likely_sensor_artifact')
   ) {
     keepAsStrongCandidate = true
@@ -85,6 +105,10 @@ export function buildObservationHomeCheck(result: ObservationPipelineResult): Ob
   } else if (!cautionUp && !softenClaim) {
     holdAsInteresting = true
     reasons.push('Moderately interesting event, no critical cautions.')
+  }
+
+  if (confidenceSupport > 0) {
+    reasons.push('Calibration/dark-frame quality provides modest confidence support only; it is not proof.')
   }
 
   return { cautionUp, softenClaim, holdAsInteresting, keepAsStrongCandidate, reasons }
