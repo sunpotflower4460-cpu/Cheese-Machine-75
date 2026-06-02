@@ -61,7 +61,11 @@ export function OverlayCanvas({
   const components = thresholdSignal?.components?.acceptedComponents ?? []
   const rejectedPixels = (thresholdSignal?.components?.rejectedComponents ?? []).flatMap((component) => component.pixels)
   const measuredTracks = thresholdSignal?.detectedTracks ?? []
-  const measuredTrackHypotheses = measuredTracks.length > 0 ? [] : hypotheses.filter((h) => h.kind === 'measured')
+  // Only show measured hypotheses that carry a genuine 'measured' origin.
+  // Placeholder-origin hypotheses are not shown — no fake measured lines.
+  const measuredTrackHypotheses = measuredTracks.length > 0
+    ? []
+    : hypotheses.filter((h) => h.kind === 'measured' && h.origin === 'measured')
   const predictedTrackHypotheses = hypotheses.filter((h) => h.kind === 'predicted')
   const simulatedTrackHypotheses = hypotheses.filter((h) => h.kind === 'simulated')
   const availableLayers = (Object.keys(LAYER_META) as OverlayLayerKey[]).filter((key) => {
