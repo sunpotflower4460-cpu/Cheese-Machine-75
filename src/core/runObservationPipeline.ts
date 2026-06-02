@@ -15,6 +15,7 @@
 
 import { OBS_BINDING_RULES, OBS_CORE_NODES, OBS_PATTERN_RULES } from './observationNodeData'
 import { buildObservationStateVector } from './observation/buildObservationStateVector'
+import { assessDataQuality } from './observation/assessDataQuality'
 import type {
   EventFeatures,
   ObservationBinding,
@@ -201,6 +202,7 @@ function liftObsPatterns(nodes: ObservationNode[], bindings: ObservationBinding[
  */
 export function runObservationPipeline(input: ObservationInput): ObservationPipelineResult {
   const start = now()
+  const qualityAssessment = input.qualityAssessment ?? assessDataQuality(input)
   const { activatedNodes, suppressedNodes, debugNotes: dn1 } = retrieveObsNodes(input.features)
   const { bindings, debugNotes: dn2 } = bindObsNodes(activatedNodes)
   const { liftedPatterns, debugNotes: dn3 } = liftObsPatterns(activatedNodes, bindings)
@@ -214,6 +216,7 @@ export function runObservationPipeline(input: ObservationInput): ObservationPipe
 
   return {
     input,
+    qualityAssessment,
     activatedNodes: activatedNodes.sort((a, b) => b.value - a.value),
     suppressedNodes,
     bindings: bindings.sort((a, b) => b.weight - a.weight),

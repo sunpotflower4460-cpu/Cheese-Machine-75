@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Route } from '../../App'
-import type { ObservationCrystal } from '../../types/observation'
+import type { DataQualityFlag, ObservationCrystal } from '../../types/observation'
 import { NavBar } from '../components/NavBar'
 import { GuidePanel } from '../components/GuidePanel'
 import { OverlayCanvas } from '../components/OverlayCanvas'
@@ -22,6 +22,28 @@ type EventDetailPageProps = {
 
 /** Crystal detail tabs aligned to the 4 observation layers */
 type Tab = 'raw' | 'measured' | 'inferred' | 'revised'
+
+const QUALITY_FLAG_LABELS: Record<DataQualityFlag, string> = {
+  'placeholder-measurement': 'Placeholder measurement',
+  'baseline-missing': 'Baseline missing',
+  'calibration-stale': 'Calibration stale',
+  'light-leak-suspected': 'Light leak suspected',
+  'frame-too-bright': 'Frame too bright',
+  'low-signal': 'Low signal',
+  'hot-pixel-overlap-high': 'Hot-pixel overlap high',
+  'thermal-noise-high': 'Thermal noise high',
+  'device-moving': 'Device moving',
+  'compression-risk': 'Compression risk',
+  'good-dark-frame': 'Good dark frame',
+  'stable-device': 'Stable device',
+  'calibrated-session': 'Calibrated session',
+}
+
+const POSITIVE_QUALITY_FLAGS: Set<DataQualityFlag> = new Set([
+  'good-dark-frame',
+  'stable-device',
+  'calibrated-session',
+])
 
 export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }: EventDetailPageProps) {
   const [tab, setTab] = useState<Tab>('raw')
@@ -49,6 +71,10 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
   const isCamera = sourceLabel === 'camera'
   // Use saved morphologyCandidate if available; otherwise classify on the fly
   const morphologyCandidate = crystal.morphologyCandidate ?? classifyMorphology(crystal.features)
+  const qualityAssessment = crystal.pipelineResult.qualityAssessment ?? { flags: [], notes: [] }
+  const qualityFlags = qualityAssessment.flags
+  const qualityWarnings = qualityFlags.filter((flag) => !POSITIVE_QUALITY_FLAGS.has(flag))
+  const qualitySupports = qualityFlags.filter((flag) => POSITIVE_QUALITY_FLAGS.has(flag))
 
   const TABS: Array<{ id: Tab; label: string; layerNote: string }> = [
     { id: 'raw', label: 'Raw', layerNote: 'Raw sensor capture: source image + capture context (no processing applied)' },
@@ -247,6 +273,49 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
 
             {/* Analysis Provenance card */}
             <AnalysisProvenanceCard provenance={crystal.analysisProvenance} />
+
+            {/* Data quality flags */}
+            <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
+              <p className="text-slate-500 text-xs uppercase tracking-wide mb-2 flex items-center gap-1">
+                <AlertTriangle size={11} className="text-amber-400" /> Data Quality Flags
+              </p>
+
+              {qualityWarnings.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-amber-300 text-[11px] uppercase tracking-wide mb-1">Warnings</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {qualityWarnings.map((flag) => (
+                      <span key={flag} className="text-xs bg-amber-900/30 text-amber-200 border border-amber-700/40 px-2 py-0.5 rounded">
+                        {QUALITY_FLAG_LABELS[flag]}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {qualitySupports.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-green-300 text-[11px] uppercase tracking-wide mb-1">Modest support only</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {qualitySupports.map((flag) => (
+                      <span key={flag} className="text-xs bg-green-900/30 text-green-200 border border-green-700/40 px-2 py-0.5 rounded">
+                        {QUALITY_FLAG_LABELS[flag]}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {qualityAssessment.notes.length > 0 ? (
+                <ul className="space-y-0.5">
+                  {qualityAssessment.notes.map((note, i) => (
+                    <li key={i} className="text-slate-400 text-xs">• {note}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-slate-500 text-xs">No quality notes recorded.</p>
+              )}
+            </div>
 
             {/* Source type hint */}
             {(isUploaded || isCamera) && (

@@ -142,6 +142,31 @@ export type MeasuredSource =
   | 'temporal-difference'
   | 'external-agent'
 
+export type DataQualityFlag =
+  | 'placeholder-measurement'
+  | 'baseline-missing'
+  | 'calibration-stale'
+  | 'light-leak-suspected'
+  | 'frame-too-bright'
+  | 'low-signal'
+  | 'hot-pixel-overlap-high'
+  | 'thermal-noise-high'
+  | 'device-moving'
+  | 'compression-risk'
+  | 'good-dark-frame'
+  | 'stable-device'
+  | 'calibrated-session'
+
+export type QualityAssessment = {
+  flags: DataQualityFlag[]
+  lightLeakScore?: number
+  stabilityScore?: number
+  thermalNoiseScore?: number
+  calibrationQuality?: number
+  compressionRisk?: number
+  notes: string[]
+}
+
 /**
  * Detection algorithm identifier — which algorithm produced the Measured values.
  * - `authored-v1`         : human-authored sample values (no algorithm)
@@ -192,6 +217,7 @@ export type ObservationInput = {
   eventId: string
   features: EventFeatures
   thresholdSignal?: ThresholdSignal
+  qualityAssessment?: QualityAssessment
   context: ObservationContext
   rawImageUri?: string     // placeholder, base64, or object URL
   notes?: string
@@ -202,6 +228,7 @@ export type ObservationInput = {
 /** Full result from the observation pipeline — Inferred layer (M4 → M6 outputs) */
 export type ObservationPipelineResult = {
   input: ObservationInput
+  qualityAssessment: QualityAssessment
   activatedNodes: ObservationNode[]
   suppressedNodes: SuppressedObservationNode[]
   bindings: ObservationBinding[]
