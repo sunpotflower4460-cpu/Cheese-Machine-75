@@ -6,6 +6,12 @@ import {
   type BrightnessStats,
   type ForegroundMask,
 } from '../measurement/threshold'
+import {
+  DEFAULT_COMPONENT_CONNECTIVITY,
+  DEFAULT_COMPONENT_SORT,
+  DEFAULT_MIN_COMPONENT_PIXELS,
+  detectConnectedComponents,
+} from '../measurement/connectedComponents'
 
 const LUMINANCE_MAX = 255
 const NOISE_STD_NORMALIZER = 40
@@ -101,6 +107,7 @@ function buildFeaturesFromLuminance(
 ): { features: EventFeatures; thresholdSignal: ThresholdSignal } {
   const stats = computeBrightnessStats(luminance)
   const foreground = extractForegroundMask(luminance, width, height, stats)
+  const components = detectConnectedComponents(foreground)
   const conservative = buildConservativePixelPhaseFeatures()
 
   return {
@@ -110,7 +117,7 @@ function buildFeaturesFromLuminance(
       noiseScore: deriveNoiseScore(luminance, foreground, stats.std),
       rarityScore: 0.5,
     },
-    thresholdSignal: { stats, foreground },
+    thresholdSignal: { stats, foreground, components },
   }
 }
 
@@ -135,6 +142,15 @@ function buildPlaceholderThresholdSignal(
       pixels: [],
       count: 0,
       ratio: 0,
+    },
+    components: {
+      components: [],
+      acceptedComponents: [],
+      rejectedComponents: [],
+      filteredCount: 0,
+      minPixelCount: DEFAULT_MIN_COMPONENT_PIXELS,
+      connectivity: DEFAULT_COMPONENT_CONNECTIVITY,
+      sortBy: DEFAULT_COMPONENT_SORT,
     },
     extractionError,
   }
