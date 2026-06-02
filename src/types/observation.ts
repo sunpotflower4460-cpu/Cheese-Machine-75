@@ -38,9 +38,31 @@ export type ForegroundMask = {
   ratio: number
 }
 
+export type DetectedComponent = {
+  id: string
+  pixels: ForegroundPixel[]
+  pixelCount: number
+  centroid: { x: number; y: number }
+  boundingBox: { x: number; y: number; width: number; height: number }
+  maxLuminance: number
+  meanLuminance: number
+  totalLuminance: number
+}
+
+export type ConnectedComponents = {
+  components: DetectedComponent[]
+  acceptedComponents: DetectedComponent[]
+  rejectedComponents: DetectedComponent[]
+  filteredCount: number
+  minPixelCount: number
+  connectivity: 4 | 8
+  sortBy: 'pixelCount' | 'totalLuminance'
+}
+
 export type ThresholdSignal = {
   stats: BrightnessStats
   foreground: ForegroundMask
+  components?: ConnectedComponents
   extractionError?: string
 }
 
