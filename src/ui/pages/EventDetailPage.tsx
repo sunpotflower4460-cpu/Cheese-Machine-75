@@ -98,8 +98,10 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
         <div className="flex items-start gap-4 mb-6">
           <div>
             <OverlayCanvas
+              key={crystal.id}
               rawImageUri={crystal.rawImageUri}
               hypotheses={overlays}
+              thresholdSignal={crystal.pipelineResult.input.thresholdSignal}
               showOverlay={showOverlay}
               width={220}
               height={220}
@@ -111,7 +113,7 @@ export function EventDetailPage({ crystal, crystals, navigate, navigateToEvent }
               }`}
             >
               <Layers size={12} />
-              {showOverlay ? 'Hide inferred overlay' : 'Show inferred overlay'}
+              {showOverlay ? 'Hide overlay layers' : 'Show overlay layers'}
             </button>
           </div>
           <div className="flex-1 space-y-2">
