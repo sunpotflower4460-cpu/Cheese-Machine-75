@@ -31,11 +31,12 @@ export function buildInputFromUploadedImage(
   imageWidth: number,
   imageHeight: number,
   notes?: string,
-): ObservationInput {
+): Promise<ObservationInput> {
   const eventId = `uploaded-${Date.now()}`
-  return {
+  return extractFeaturesFromUploadedImage(imageUri, imageWidth, imageHeight).then((extracted) => ({
     eventId,
-    features: extractFeaturesFromUploadedImage(imageUri, imageWidth, imageHeight),
+    features: extracted.features,
+    thresholdSignal: extracted.thresholdSignal,
     context: {
       deviceId: 'user-device',
       sessionId: `session-upload-${Date.now()}`,
@@ -45,9 +46,9 @@ export function buildInputFromUploadedImage(
     },
     rawImageUri: imageUri,
     sourceType: 'uploaded-image',
-    measuredSource: 'placeholder-dimension',
+    measuredSource: extracted.measuredSource,
     notes: notes ?? 'User-uploaded image',
-  }
+  }))
 }
 
 /**
@@ -58,11 +59,12 @@ export function buildInputFromCameraFrame(
   imageUri: string,
   imageWidth: number,
   imageHeight: number,
-): ObservationInput {
+): Promise<ObservationInput> {
   const eventId = `camera-${Date.now()}`
-  return {
+  return extractFeaturesFromUploadedImage(imageUri, imageWidth, imageHeight).then((extracted) => ({
     eventId,
-    features: extractFeaturesFromUploadedImage(imageUri, imageWidth, imageHeight),
+    features: extracted.features,
+    thresholdSignal: extracted.thresholdSignal,
     context: {
       deviceId: 'browser-camera',
       sessionId: `session-camera-${Date.now()}`,
@@ -72,7 +74,7 @@ export function buildInputFromCameraFrame(
     },
     rawImageUri: imageUri,
     sourceType: 'camera',
-    measuredSource: 'placeholder-dimension',
+    measuredSource: extracted.measuredSource,
     notes: 'Captured frame from browser camera',
-  }
+  }))
 }

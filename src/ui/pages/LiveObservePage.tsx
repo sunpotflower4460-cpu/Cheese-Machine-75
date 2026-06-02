@@ -83,16 +83,18 @@ export function LiveObservePage({ crystals, onSave, navigate }: LiveObservePageP
   }, [result, guide, homeCheck, crystals, onSave])
 
   const handleImageReady = useCallback(
-    (imageUri: string, width: number, height: number, fileName: string) => {
+    async (imageUri: string, width: number, height: number, fileName: string) => {
       setSavedId(null)
-      setUploadedInput(buildInputFromUploadedImage(imageUri, width, height, `Uploaded: ${fileName}`))
+      const input = await buildInputFromUploadedImage(imageUri, width, height, `Uploaded: ${fileName}`)
+      setUploadedInput(input)
     },
     [],
   )
 
-  const handleCameraReady = useCallback((imageUri: string, width: number, height: number) => {
+  const handleCameraReady = useCallback(async (imageUri: string, width: number, height: number) => {
     setSavedId(null)
-    setCameraInput(buildInputFromCameraFrame(imageUri, width, height))
+    const input = await buildInputFromCameraFrame(imageUri, width, height)
+    setCameraInput(input)
   }, [])
 
   const handleImageClear = useCallback(() => {

@@ -14,6 +14,36 @@ export type EventFeatures = {
   noiseScore: number       // 0–1 estimated noise contamination
 }
 
+export type BrightnessStats = {
+  mean: number
+  median: number
+  std: number
+  max: number
+  min: number
+  threshold: number
+}
+
+export type ForegroundPixel = {
+  x: number
+  y: number
+  luminance: number
+}
+
+export type ForegroundMask = {
+  width: number
+  height: number
+  threshold: number
+  pixels: ForegroundPixel[]
+  count: number
+  ratio: number
+}
+
+export type ThresholdSignal = {
+  stats: BrightnessStats
+  foreground: ForegroundMask
+  extractionError?: string
+}
+
 /** Context around the observation (device, environment) */
 export type ObservationContext = {
   deviceId: string
@@ -121,6 +151,7 @@ export type AnalysisProvenance = {
 export type ObservationInput = {
   eventId: string
   features: EventFeatures
+  thresholdSignal?: ThresholdSignal
   context: ObservationContext
   rawImageUri?: string     // placeholder, base64, or object URL
   notes?: string

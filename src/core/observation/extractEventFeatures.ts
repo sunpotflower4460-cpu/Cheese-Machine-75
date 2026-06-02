@@ -1,27 +1,104 @@
-// Feature extraction from observation events
-// For MVP: rule-based extraction from mock/sample data
-// Future: replace with real image processing
-//
-// 写像 M2: Event (Raw) → Measured
-// このファイルは Raw 層（カメラフレーム・検出イベントの生データ）から
-// Measured 層（EventFeatures）を作る責務を担う。
-// Raw と Measured は別の層であり、混同しないこと。
+import type { EventFeatures, MeasuredSource, ThresholdSignal } from '../../types/observation'
+import { loadImagePixels } from '../measurement/imageLoader'
+import {
+  computeBrightnessStats,
+  extractForegroundMask,
+  type BrightnessStats,
+  type ForegroundMask,
+} from '../measurement/threshold'
 
-import type { EventFeatures } from '../../types/observation'
+const LUMINANCE_MAX = 255
+const NOISE_STD_NORMALIZER = 40
 
 /** Clamp a value between 0 and 1 */
 const clamp = (v: number): number => Math.max(0, Math.min(1, v))
 
-/**
- * M2: Event (Raw) → Measured
- *
- * 生のイベントデータ（フレーム画像・ピクセル値など）から
- * 正規化された測定値 (EventFeatures) を生成する。
- *
- * @param raw - Raw 層の入力値（部分的でもよい）。実装上は Partial<EventFeatures> だが、
- *              将来は画像バッファやフレームオブジェクトになる。
- * @returns EventFeatures - Measured 層の値。すべて 0–1 に正規化されている。
- */
+function buildDimensionFeatures(width: number, height: number): EventFeatures {
+  const safeWidth = Math.max(1, width)
+  const safeHeight = Math.max(1, height)
+  const aspectRatio = safeWidth / safeHeight
+  const linearity = clamp(0.5 + (aspectRatio > 1 ? 0.15 : -0.1))
+  const length = clamp(0.4 + Math.min(Math.max(aspectRatio - 0.5, 0), 1) * 0.3)
+
+  return {
+    brightness: 0.5,
+    length,
+    width: clamp(0.2 - (linearity - 0.5) * 0.2),
+    linearity,
+    curvature: 0.2,
+    scatterScore: 0.25,
+    clusterScore: 0.2,
+    rarityScore: 0.5,
+    noiseScore: 0.3,
+  }
+}
+
+function deriveBrightness(stats: BrightnessStats, foreground: ForegroundMask): number {
+  if (foreground.count === 0) {
+    return Number(clamp((stats.mean / LUMINANCE_MAX) * 0.2).toFixed(4))
+  }
+
+  const totalPixels = foreground.width * foreground.height
+  const foregroundSum = foreground.pixels.reduce((sum, pixel) => sum + pixel.luminance, 0)
+  const foregroundMean = foregroundSum / foreground.count
+  const backgroundCount = totalPixels - foreground.count
+  const backgroundMean = backgroundCount > 0
+    ? ((stats.mean * totalPixels) - foregroundSum) / backgroundCount
+    : stats.mean
+  const foregroundMax = foreground.pixels.reduce((max, pixel) => Math.max(max, pixel.luminance), 0)
+
+  const separation = clamp((foregroundMean - backgroundMean) / LUMINANCE_MAX)
+  const peak = clamp((foregroundMax - backgroundMean) / LUMINANCE_MAX)
+  const sparsityBias = Math.min(0.1, (1 - foreground.ratio) * 0.1)
+
+  return Number(clamp(separation * 0.75 + peak * 0.2 + sparsityBias).toFixed(4))
+}
+
+function deriveNoiseScore(
+  luminance: Float32Array,
+  foreground: ForegroundMask,
+  fallbackStd: number,
+): number {
+  let count = 0
+  let sum = 0
+  let sumSquares = 0
+
+  for (let i = 0; i < luminance.length; i += 1) {
+    const value = luminance[i]
+    if (value >= foreground.threshold) continue
+
+    count += 1
+    sum += value
+    sumSquares += value * value
+  }
+
+  const std = count > 0
+    ? Math.sqrt(Math.max(0, (sumSquares / count) - ((sum / count) ** 2)))
+    : fallbackStd
+
+  return Number(clamp(std / NOISE_STD_NORMALIZER).toFixed(4))
+}
+
+function buildFeaturesFromLuminance(
+  width: number,
+  height: number,
+  luminance: Float32Array,
+): { features: EventFeatures; thresholdSignal: ThresholdSignal } {
+  const stats = computeBrightnessStats(luminance)
+  const foreground = extractForegroundMask(luminance, width, height, stats)
+  const dimensions = buildDimensionFeatures(width, height)
+
+  return {
+    features: {
+      ...dimensions,
+      brightness: deriveBrightness(stats, foreground),
+      noiseScore: deriveNoiseScore(luminance, foreground, stats.std),
+      rarityScore: 0.5,
+    },
+    thresholdSignal: { stats, foreground },
+  }
+}
+
 export function extractEventFeatures(raw: Partial<EventFeatures>): EventFeatures {
   return {
     brightness: clamp(raw.brightness ?? 0.5),
@@ -36,39 +113,46 @@ export function extractEventFeatures(raw: Partial<EventFeatures>): EventFeatures
   }
 }
 
-/**
- * M2 (uploaded image): Image → Measured
- *
- * アップロード画像から EventFeatures を生成する。
- * 現時点では画像の幅・高さ・アスペクト比をヒントにした簡易特徴量を返す。
- * 将来は canvas API などによる実ピクセル解析に置き換える。
- *
- * @param imageUri - data URL または object URL
- * @param width - 画像の表示幅 (px)
- * @param height - 画像の表示高さ (px)
- */
-export function extractFeaturesFromUploadedImage(
-  _imageUri: string,
+export async function extractFeaturesFromUploadedImage(
+  imageUri: string,
   width: number,
   height: number,
-): EventFeatures {
-  // Placeholder: derive a lightweight feature set from image dimensions.
-  // Aspect ratio: narrow tall → more "linear" feel; wide short → more "scattered"
-  const aspectRatio = width > 0 && height > 0 ? width / height : 1
-  const linearity = clamp(0.5 + (aspectRatio > 1 ? 0.15 : -0.1))
-  const length = clamp(0.4 + Math.min(Math.max(aspectRatio - 0.5, 0), 1) * 0.3)
+): Promise<{ features: EventFeatures; measuredSource: MeasuredSource; thresholdSignal?: ThresholdSignal }> {
+  const dimensionFeatures = buildDimensionFeatures(width, height)
 
-  return extractEventFeatures({
-    brightness: 0.5,       // unknown without pixel analysis
-    length,
-    width: clamp(0.2 - (linearity - 0.5) * 0.2),
-    linearity,
-    curvature: 0.2,        // assume moderate without analysis
-    scatterScore: 0.25,
-    clusterScore: 0.2,
-    rarityScore: 0.5,      // treat user-uploaded image as moderately interesting
-    noiseScore: 0.3,
-  })
+  try {
+    const loaded = await loadImagePixels(imageUri)
+    const measured = buildFeaturesFromLuminance(loaded.width, loaded.height, loaded.luminance)
+    return {
+      features: measured.features,
+      measuredSource: 'pixel-derived',
+      thresholdSignal: measured.thresholdSignal,
+    }
+  } catch (error) {
+    return {
+      features: dimensionFeatures,
+      measuredSource: 'placeholder-dimension',
+      thresholdSignal: {
+        stats: {
+          mean: 0,
+          median: 0,
+          std: 0,
+          max: 0,
+          min: 0,
+          threshold: 0,
+        },
+        foreground: {
+          width: Math.max(1, width),
+          height: Math.max(1, height),
+          threshold: 0,
+          pixels: [],
+          count: 0,
+          ratio: 0,
+        },
+        extractionError: error instanceof Error ? error.message : 'Foreground extraction failed.',
+      },
+    }
+  }
 }
 
 export function randomEventFeatures(seed?: number): EventFeatures {
