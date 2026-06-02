@@ -16,6 +16,7 @@ import type {
   DetectionAlgorithmId,
   GuideBundle,
   MeasuredSource,
+  MorphologyCandidate,
   ObservationCrystal,
   ObservationHomeCheck,
   ObservationPipelineResult,
@@ -23,6 +24,7 @@ import type {
 } from '../types/observation'
 import { deriveMeasuredSource } from './observation/measuredSource'
 import { linkSimilarEvents } from './revision/linkSimilarEvents'
+import { classifyMorphology } from './morphology/classifyMorphology'
 
 /** Current analysis pipeline version — bump when the algorithm changes. */
 const ANALYSIS_VERSION = '0.1.0'
@@ -153,6 +155,8 @@ export function buildObservationCrystal(
   const measuredSource =
     pipelineResult.input.measuredSource ?? deriveMeasuredSource(sourceType)
 
+  const morphologyCandidate: MorphologyCandidate = classifyMorphology(pipelineResult.input.features)
+
   const crystal: ObservationCrystal = {
     id: createId(),
     createdAt,
@@ -165,6 +169,7 @@ export function buildObservationCrystal(
     pipelineResult,
     guideBundle,
     homeCheck,
+    morphologyCandidate,
     revisionHistory: [],
     memoryLinks: [],
     recheckFlag: homeCheck.cautionUp || homeCheck.softenClaim,

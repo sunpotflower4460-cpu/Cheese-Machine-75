@@ -278,6 +278,47 @@ export type ObservationRevisionEntry = {
   trigger: 'manual' | 'similar_found' | 'recheck_flag'
 }
 
+/**
+ * Morphology candidate classification — Inferred layer.
+ * Describes the visual/geometric shape class of the detected candidate.
+ * This is a cautious label only — it does NOT imply physical origin.
+ *
+ * Use careful wording: "track-like morphology", not "muon track".
+ */
+export type MorphologyClass =
+  | 'track'      // high linearity, long/narrow
+  | 'worm'       // curved/moderate linearity, non-trivial length
+  | 'spot'       // small, compact, low length
+  | 'cluster'    // dense area, low linearity, larger region
+  | 'artifact'   // quality/hot-pixel evidence
+  | 'unknown'    // insufficient or conflicting geometry
+
+/**
+ * A single morphology classification result — Inferred layer (derived from Measured features).
+ * Always presented as a candidate only — never as confirmed physical origin.
+ */
+export type MorphologyCandidate = {
+  /** The cautious shape class assigned to this candidate. */
+  morphologyClass: MorphologyClass
+  /**
+   * Confidence in the morphology classification (0–1).
+   * Down-weighted when quality flags are high.
+   */
+  confidence: number
+  /**
+   * Display label using careful wording.
+   * Examples: "track-like morphology", "spot-like candidate", "artifact-like pattern".
+   */
+  label: string
+  /** Feature conditions that led to this classification. */
+  reasons: string[]
+  /**
+   * Caution notes — present when noise/quality is high or geometry is ambiguous.
+   * These should be shown in the UI alongside the morphology label.
+   */
+  cautionNotes: string[]
+}
+
 /** Home/caution check result for observation pipeline — Inferred layer (M8 output) */
 export type ObservationHomeCheck = {
   cautionUp: boolean           // increase caution display
@@ -329,6 +370,8 @@ export type ObservationCrystal = {
   pipelineResult: ObservationPipelineResult
   guideBundle: GuideBundle
   homeCheck: ObservationHomeCheck
+  /** Morphology candidate classification — Inferred layer. Cautious shape label only; not a physical origin claim. */
+  morphologyCandidate: MorphologyCandidate
   // ----- Revised 層 -----
   // Post-evaluation: revision history, memory links, recheck flags, later updates
   revisionHistory: ObservationRevisionEntry[]

@@ -2,6 +2,7 @@
 // One event = one ObservationCrystal
 
 import type { AnalysisProvenance, ObservationCrystal, ObservationRevisionEntry } from '../types/observation'
+import { classifyMorphology } from '../core/morphology/classifyMorphology'
 
 const STORAGE_KEY = 'cheese_machine_crystals'
 
@@ -24,6 +25,12 @@ function migrateProvenance(c: ObservationCrystal): ObservationCrystal {
   return { ...c, analysisProvenance: provenance }
 }
 
+/** Compute morphologyCandidate for crystals saved before morphology classification was introduced. */
+function migrateMorphology(c: ObservationCrystal): ObservationCrystal {
+  if (c.morphologyCandidate) return c
+  return { ...c, morphologyCandidate: classifyMorphology(c.features) }
+}
+
 export function loadCrystals(): ObservationCrystal[] {
   if (!canUseLocalStorage()) {
     return []
@@ -33,10 +40,11 @@ export function loadCrystals(): ObservationCrystal[] {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw) as ObservationCrystal[]
-    // Migrate older crystals that may not have sourceType or analysisProvenance
+    // Migrate older crystals that may not have sourceType, analysisProvenance, or morphologyCandidate
     return parsed
       .map((c) => (c.sourceType ? c : { ...c, sourceType: 'sample' as const }))
       .map(migrateProvenance)
+      .map(migrateMorphology)
   } catch {
     return []
   }
