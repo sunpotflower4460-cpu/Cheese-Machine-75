@@ -50,7 +50,7 @@ export const OBS_NODE_DICT: Record<string, { description: string; triggerHints: 
     triggerHints: ['high rarity score'],
   },
   possible_particle_candidate: {
-    description: 'Features suggest a real particle track worth investigating further.',
+    description: 'Features suggest a track-like candidate worth investigating further.',
     triggerHints: ['high linearity', 'low noise', 'moderate-to-high rarity'],
   },
   likely_sensor_artifact: {
@@ -86,7 +86,7 @@ export const OBS_NODE_DICT: Record<string, { description: string; triggerHints: 
     triggerHints: ['high brightness', 'high linearity', 'low noise'],
   },
   faint_trace: {
-    description: 'Low brightness event, potentially real but hard to distinguish from noise.',
+    description: 'Low-brightness candidate event that is hard to distinguish from noise.',
     triggerHints: ['low brightness', 'low-moderate noise'],
   },
   curved_track: {
@@ -148,19 +148,19 @@ export const OBS_PATTERN_RULES: Array<{ id: string; label: string; reqNodes: str
     id: 'clean_particle_track',
     label: 'Clean Particle Track',
     reqNodes: ['linear_trace', 'possible_particle_candidate', 'low_noise_context'],
-    description: 'Strong evidence of a real particle track in clean conditions.',
+    description: 'Strong track-like candidate evidence under cleaner conditions.',
   },
   {
     id: 'ambiguous_candidate',
     label: 'Ambiguous Candidate',
     reqNodes: ['worth_recheck', 'artifact_bias'],
-    description: 'Could be real, could be artifact. Needs further investigation.',
+    description: 'Could be a meaningful signal or an artifact. Needs further investigation.',
   },
   {
     id: 'artifact_cluster',
     label: 'Artifact Cluster',
     reqNodes: ['hot_pixel_pattern', 'thermal_noise_bias'],
-    description: 'Multiple artifact indicators – likely not a real particle event.',
+    description: 'Multiple artifact indicators are active; treat this event as unconfirmed.',
   },
   {
     id: 'unusual_geometry',
@@ -172,7 +172,7 @@ export const OBS_PATTERN_RULES: Array<{ id: string; label: string; reqNodes: str
     id: 'complex_interaction',
     label: 'Complex Interaction',
     reqNodes: ['multi_origin_possibility', 'simulation_recommended'],
-    description: 'Complex event that may involve multiple particles or interaction vertices.',
+    description: 'Complex candidate event that may involve multiple interaction sources.',
   },
   {
     id: 'recheck_candidate',
